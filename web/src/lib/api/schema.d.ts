@@ -21,10 +21,152 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Me
+         * @description Returns the signed-in user, creating the row on first call.
+         */
+        get: operations["get_me_api_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/personas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Personas */
+        get: operations["list_personas_api_personas_get"];
+        put?: never;
+        /** Create Persona */
+        post: operations["create_persona_api_personas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/personas/{persona_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Persona */
+        get: operations["get_persona_api_personas__persona_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Persona */
+        patch: operations["update_persona_api_personas__persona_id__patch"];
+        trace?: never;
+    };
+    "/api/personas/{persona_id}/examples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Example */
+        post: operations["add_example_api_personas__persona_id__examples_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/personas/{persona_id}/examples/{example_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Example */
+        delete: operations["delete_example_api_personas__persona_id__examples__example_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Example */
+        patch: operations["update_example_api_personas__persona_id__examples__example_id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ExampleCreate */
+        ExampleCreate: {
+            /** Question */
+            question: string;
+            /** Answer */
+            answer: string;
+            /**
+             * Is Private
+             * @default true
+             */
+            is_private?: boolean;
+        };
+        /** ExampleOut */
+        ExampleOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Question */
+            question: string;
+            /** Answer */
+            answer: string;
+            /** Shape */
+            shape: ("comparison" | "how_to" | "definition" | "troubleshooting" | "opinion" | "recommendation" | "casual" | "other") | null;
+            /** Is Private */
+            is_private: boolean;
+            /** Is Held Out */
+            is_held_out: boolean;
+            /** Synthetic Of */
+            synthetic_of: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ExampleUpdate */
+        ExampleUpdate: {
+            /** Question */
+            question?: string | null;
+            /** Answer */
+            answer?: string | null;
+            /** Is Private */
+            is_private?: boolean | null;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** HealthDegraded */
         HealthDegraded: {
             /**
@@ -32,7 +174,7 @@ export interface components {
              * @default degraded
              * @constant
              */
-            status: "degraded";
+            status?: "degraded";
             /**
              * Db
              * @enum {string}
@@ -51,7 +193,251 @@ export interface components {
              * @default ok
              * @constant
              */
-            status: "ok";
+            status?: "ok";
+        };
+        /** PersonaCreate */
+        PersonaCreate: {
+            /** Display Name */
+            display_name: string;
+            /** Slug */
+            slug?: string | null;
+            /** Description */
+            description?: string | null;
+            settings?: components["schemas"]["PersonaSettings"];
+            /**
+             * Rules
+             * @default
+             */
+            rules?: string;
+            /**
+             * Mode
+             * @default simple
+             * @enum {string}
+             */
+            mode?: "simple" | "like_me";
+        };
+        /** PersonaListItem */
+        PersonaListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+            /**
+             * Visibility
+             * @enum {string}
+             */
+            visibility: "private" | "unlisted" | "public";
+            /** Display Name */
+            display_name: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simple" | "like_me";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "compiling" | "ready" | "failed";
+            /** Version Number */
+            version_number: number;
+            /** Example Count */
+            example_count: number;
+            /** Published Version Id */
+            published_version_id: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** PersonaOut */
+        PersonaOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+            /**
+             * Visibility
+             * @enum {string}
+             */
+            visibility: "private" | "unlisted" | "public";
+            /** Owner Can Read Chats */
+            owner_can_read_chats: boolean;
+            /** Published Version Id */
+            published_version_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** @description The latest version; the one edits apply to */
+            draft: components["schemas"]["VersionOut"];
+            published: components["schemas"]["VersionSummary"] | null;
+        };
+        /**
+         * PersonaSettings
+         * @description Stored as `persona_versions.settings` (jsonb). Free-text fields may be Thai or English.
+         */
+        PersonaSettings: {
+            /**
+             * Language
+             * @default mixed
+             * @enum {string}
+             */
+            language?: "th" | "en" | "mixed";
+            /**
+             * Tone
+             * @default
+             */
+            tone?: string;
+            /**
+             * Answer Length
+             * @default medium
+             * @enum {string}
+             */
+            answer_length?: "short" | "medium" | "long";
+            /**
+             * Technical Level
+             * @default intermediate
+             * @enum {string}
+             */
+            technical_level?: "beginner" | "intermediate" | "expert";
+            /**
+             * Personality
+             * @default
+             */
+            personality?: string;
+            /**
+             * Writing Style
+             * @default
+             */
+            writing_style?: string;
+            /** Formatting */
+            formatting?: string[];
+        };
+        /**
+         * PersonaUpdate
+         * @description Partial update. Any field other than `slug` edits the version (see PersonaService).
+         */
+        PersonaUpdate: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Slug */
+            slug?: string | null;
+            /** Description */
+            description?: string | null;
+            settings?: components["schemas"]["PersonaSettings"] | null;
+            /** Rules */
+            rules?: string | null;
+            /** Mode */
+            mode?: ("simple" | "like_me") | null;
+        };
+        /** UserOut */
+        UserOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Clerk User Id */
+            clerk_user_id: string;
+            /** Display Name */
+            display_name: string;
+            /** Locale */
+            locale: string;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
+        };
+        /** VersionOut */
+        VersionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version Number */
+            version_number: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "compiling" | "ready" | "failed";
+            /** Display Name */
+            display_name: string;
+            /** Description */
+            description: string | null;
+            settings: components["schemas"]["PersonaSettings"];
+            /** Rules */
+            rules: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simple" | "like_me";
+            /** Style Card */
+            style_card: {
+                [key: string]: unknown;
+            } | null;
+            /** Fixed Example Ids */
+            fixed_example_ids: string[];
+            /** Compiled At */
+            compiled_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Examples */
+            examples: components["schemas"]["ExampleOut"][];
+        };
+        /** VersionSummary */
+        VersionSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version Number */
+            version_number: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "compiling" | "ready" | "failed";
+            /** Display Name */
+            display_name: string;
+            /** Compiled At */
+            compiled_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
     };
     responses: never;
@@ -87,6 +473,246 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthDegraded"];
+                };
+            };
+        };
+    };
+    get_me_api_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+        };
+    };
+    list_personas_api_personas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonaListItem"][];
+                };
+            };
+        };
+    };
+    create_persona_api_personas_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PersonaCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_persona_api_personas__persona_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                persona_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_persona_api_personas__persona_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                persona_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PersonaUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_example_api_personas__persona_id__examples_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                persona_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExampleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExampleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_example_api_personas__persona_id__examples__example_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                persona_id: string;
+                example_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_example_api_personas__persona_id__examples__example_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                persona_id: string;
+                example_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExampleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExampleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -1,0 +1,124 @@
+{
+  "app": {
+    "name": "Persona Platform",
+    "tagline": "สร้าง AI persona ในสไตล์ของคุณ แล้วแชร์ลิงก์ให้เพื่อนคุยได้",
+    "studio": "สตูดิโอ",
+    "home": "หน้าแรก",
+    "language": "ภาษา"
+  },
+  "auth": {
+    "signIn": "เข้าสู่ระบบ",
+    "signOut": "ออกจากระบบ",
+    "signInRequired": "กรุณาเข้าสู่ระบบเพื่อใช้งานสตูดิโอ",
+    "devMode": "โหมดพัฒนา (ไม่มี Clerk)",
+    "devUser": "ผู้ใช้ทดสอบ"
+  },
+  "common": {
+    "save": "บันทึก",
+    "saving": "กำลังบันทึก…",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "add": "เพิ่ม",
+    "loading": "กำลังโหลด…",
+    "error": "เกิดข้อผิดพลาด",
+    "saved": "บันทึกแล้ว",
+    "confirmDelete": "ลบรายการนี้ใช่ไหม?",
+    "back": "กลับ",
+    "optional": "ไม่บังคับ"
+  },
+  "status": {
+    "draft": "ฉบับร่าง",
+    "compiling": "กำลังประมวลผล",
+    "ready": "พร้อมใช้",
+    "failed": "ล้มเหลว",
+    "published": "เผยแพร่แล้ว",
+    "version": "เวอร์ชัน {n}"
+  },
+  "visibility": {
+    "private": "ส่วนตัว",
+    "unlisted": "ไม่แสดงในรายการ",
+    "public": "สาธารณะ"
+  },
+  "studio": {
+    "title": "Persona ของฉัน",
+    "empty": "ยังไม่มี persona — สร้างอันแรกได้เลย",
+    "new": "สร้าง persona ใหม่",
+    "examples": "{count, plural, =0 {ยังไม่มีตัวอย่าง} =1 {1 ตัวอย่าง} other {# ตัวอย่าง}}",
+    "open": "เปิด"
+  },
+  "persona": {
+    "createTitle": "สร้าง persona ใหม่",
+    "displayName": "ชื่อที่แสดง",
+    "displayNameHint": "ชื่อของคุณหรือชื่อเล่น เช่น พี่บอส",
+    "slug": "ลิงก์ (slug)",
+    "slugHint": "ตัวอักษร a-z ตัวเลข และ - เท่านั้น เว้นว่างเพื่อสุ่ม",
+    "description": "คำอธิบายสั้นๆ",
+    "create": "สร้าง",
+    "tabs": {
+      "settings": "การตั้งค่า",
+      "examples": "ตัวอย่างคำตอบ"
+    },
+    "settings": {
+      "title": "สไตล์การตอบ",
+      "language": "ภาษา",
+      "languageOptions": {
+        "th": "ไทย",
+        "en": "อังกฤษ",
+        "mixed": "ไทยปนอังกฤษ"
+      },
+      "tone": "น้ำเสียง",
+      "toneHint": "เช่น เป็นกันเอง ตรงไปตรงมา ขี้เล่น",
+      "answerLength": "ความยาวคำตอบ",
+      "answerLengthOptions": {
+        "short": "สั้น",
+        "medium": "ปานกลาง",
+        "long": "ยาว"
+      },
+      "technicalLevel": "ระดับความลึกทางเทคนิค",
+      "technicalLevelOptions": {
+        "beginner": "มือใหม่",
+        "intermediate": "ปานกลาง",
+        "expert": "ผู้เชี่ยวชาญ"
+      },
+      "personality": "บุคลิก",
+      "writingStyle": "สไตล์การเขียน",
+      "writingStyleHint": "เช่น ชอบเปรียบเทียบ ใช้ลูกศร → อธิบาย",
+      "formatting": "รูปแบบที่ใช้บ่อย",
+      "formattingOptions": {
+        "bullets": "หัวข้อย่อย",
+        "comparisons": "ตารางเปรียบเทียบ",
+        "analogies": "การเปรียบเปรย",
+        "headings": "หัวข้อ",
+        "code_blocks": "โค้ดบล็อก",
+        "emoji": "อีโมจิ"
+      },
+      "rules": "กฎเพิ่มเติม",
+      "rulesHint": "เช่น ลงท้ายด้วย สรุป: เสมอ",
+      "mode": "โหมด",
+      "modeSimple": "Simple — เร็วและประหยัด",
+      "modeLikeMe": "Like Me — เร็วๆ นี้"
+    },
+    "examplesTab": {
+      "title": "ตัวอย่างคำถาม → คำตอบ",
+      "hint": "ยิ่งมีตัวอย่างจริงมาก persona ยิ่งเหมือนคุณ แนะนำอย่างน้อย 5 ตัวอย่าง และต้องมีตัวอย่างสาธารณะอย่างน้อย 3 รายการก่อนเผยแพร่",
+      "warningTitle": "ก่อนอัปโหลด",
+      "warning": "ห้ามใส่รหัสผ่าน, API key, ข้อมูลลับของบริษัท หรือข้อความของคนอื่น (แชทมักมีข้อความของคนอื่นปนอยู่ ซึ่งเข้าข่าย PDPA) ตัวอย่างที่ตั้งเป็นส่วนตัวจะถูกใช้เฉพาะตอนคุณทดสอบเอง",
+      "question": "คำถาม",
+      "answer": "คำตอบ (ในสไตล์ของคุณ)",
+      "private": "ส่วนตัว",
+      "public": "สาธารณะ",
+      "privateHint": "ส่วนตัว = ไม่ถูกใช้ตอบผู้เยี่ยมชม",
+      "addExample": "เพิ่มตัวอย่าง",
+      "editExample": "แก้ไขตัวอย่าง",
+      "empty": "ยังไม่มีตัวอย่าง",
+      "shape": "รูปแบบ",
+      "publicCount": "สาธารณะ {n} จาก {total}"
+    },
+    "newVersionNotice": "persona นี้เผยแพร่อยู่ การแก้ไขจะสร้างเวอร์ชันร่างใหม่ ลิงก์ที่แชร์ไปยังใช้เวอร์ชันเดิมจนกว่าจะเผยแพร่อีกครั้ง"
+  },
+  "health": {
+    "label": "สถานะ API",
+    "refresh": "รีเฟรช"
+  }
+}

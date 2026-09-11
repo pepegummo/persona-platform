@@ -5,6 +5,7 @@ See `.env.example` at the repo root for every supported variable.
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,6 +24,15 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     web_origin: str = "http://localhost:3000"
 
+    # --- Auth (Clerk) ---
+    app_env: Literal["development", "test", "production"] = "development"
+    clerk_publishable_key: str = ""
+    clerk_secret_key: str = ""
+    clerk_jwks_url: str = ""
+    clerk_issuer: str = ""  # optional; e.g. https://xxx.clerk.accounts.dev
+    # Dev only: accept `Authorization: Bearer dev:<id>` without Clerk. Never honored in production.
+    auth_dev_bypass: bool = False
+
     # --- Feature flags (all off in Phase 1A) ---
     feature_eval: bool = False
     feature_synth_rewrite: bool = False
@@ -39,3 +49,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def dev_bypass_enabled(settings: Settings) -> bool:
+    return settings.auth_dev_bypass and settings.app_env != "production"

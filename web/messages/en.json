@@ -1,0 +1,124 @@
+{
+  "app": {
+    "name": "Persona Platform",
+    "tagline": "Create an AI persona that answers in your style and share it by link",
+    "studio": "Studio",
+    "home": "Home",
+    "language": "Language"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signInRequired": "Sign in to use the studio",
+    "devMode": "Dev mode (no Clerk)",
+    "devUser": "Dev user"
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "saved": "Saved",
+    "confirmDelete": "Delete this item?",
+    "back": "Back",
+    "optional": "optional"
+  },
+  "status": {
+    "draft": "Draft",
+    "compiling": "Compiling",
+    "ready": "Ready",
+    "failed": "Failed",
+    "published": "Published",
+    "version": "Version {n}"
+  },
+  "visibility": {
+    "private": "Private",
+    "unlisted": "Unlisted",
+    "public": "Public"
+  },
+  "studio": {
+    "title": "My personas",
+    "empty": "No personas yet — create your first one",
+    "new": "New persona",
+    "examples": "{count, plural, =0 {No examples} =1 {1 example} other {# examples}}",
+    "open": "Open"
+  },
+  "persona": {
+    "createTitle": "Create a persona",
+    "displayName": "Display name",
+    "displayNameHint": "Your name or nickname, e.g. Boss",
+    "slug": "Link (slug)",
+    "slugHint": "Letters a-z, digits and - only. Leave empty for a random one",
+    "description": "Short description",
+    "create": "Create",
+    "tabs": {
+      "settings": "Settings",
+      "examples": "Examples"
+    },
+    "settings": {
+      "title": "Answering style",
+      "language": "Language",
+      "languageOptions": {
+        "th": "Thai",
+        "en": "English",
+        "mixed": "Thai mixed with English"
+      },
+      "tone": "Tone",
+      "toneHint": "e.g. casual, direct, playful",
+      "answerLength": "Answer length",
+      "answerLengthOptions": {
+        "short": "Short",
+        "medium": "Medium",
+        "long": "Long"
+      },
+      "technicalLevel": "Technical level",
+      "technicalLevelOptions": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "expert": "Expert"
+      },
+      "personality": "Personality",
+      "writingStyle": "Writing style",
+      "writingStyleHint": "e.g. loves comparisons, uses → to map terms",
+      "formatting": "Formatting habits",
+      "formattingOptions": {
+        "bullets": "Bullets",
+        "comparisons": "Comparison tables",
+        "analogies": "Analogies",
+        "headings": "Headings",
+        "code_blocks": "Code blocks",
+        "emoji": "Emoji"
+      },
+      "rules": "Custom rules",
+      "rulesHint": "e.g. always end with สรุป:",
+      "mode": "Mode",
+      "modeSimple": "Simple — fast and cheap",
+      "modeLikeMe": "Like Me — coming soon"
+    },
+    "examplesTab": {
+      "title": "Question → answer examples",
+      "hint": "The more real examples, the more the persona sounds like you. Aim for at least 5; at least 3 public examples are needed to publish.",
+      "warningTitle": "Before you upload",
+      "warning": "No passwords, API keys, confidential company data, or other people's messages (chat logs usually contain them — this matters under PDPA). Private examples are only used when you test the persona yourself.",
+      "question": "Question",
+      "answer": "Answer (in your style)",
+      "private": "Private",
+      "public": "Public",
+      "privateHint": "Private = never used to answer visitors",
+      "addExample": "Add example",
+      "editExample": "Edit example",
+      "empty": "No examples yet",
+      "shape": "Shape",
+      "publicCount": "{n} of {total} public"
+    },
+    "newVersionNotice": "This persona is published. Edits create a new draft version; the shared link keeps using the published version until you publish again."
+  },
+  "health": {
+    "label": "API status",
+    "refresh": "Refresh"
+  }
+}

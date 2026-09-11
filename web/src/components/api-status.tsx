@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ async function load(): Promise<State> {
 }
 
 export function ApiStatus() {
+  const t = useTranslations("health");
   const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function ApiStatus() {
 
   return (
     <div className="flex flex-col items-start gap-3 rounded-lg border p-4">
-      <p className="text-sm text-muted-foreground">API status / สถานะ API</p>
+      <p className="text-sm text-muted-foreground">{t("label")}</p>
       <p className="font-mono" data-testid="api-status">
         {state.kind === "loading" && "…"}
         {state.kind === "ok" && "ok"}
@@ -49,7 +51,7 @@ export function ApiStatus() {
         {state.kind === "unreachable" && "unreachable"}
       </p>
       <Button variant="outline" size="sm" onClick={() => void refresh()}>
-        Refresh / รีเฟรช
+        {t("refresh")}
       </Button>
     </div>
   );

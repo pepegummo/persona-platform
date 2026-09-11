@@ -18,8 +18,9 @@ if config.config_file_name is not None:
 
 config.set_main_option("sqlalchemy.url", get_settings().database_url)
 
-# M1 will point this at the SQLAlchemy metadata for autogenerate.
-target_metadata = None
+from app.models import Base  # noqa: E402
+
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:

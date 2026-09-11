@@ -31,6 +31,7 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://persona:persona@localhost:5432/persona
       REDIS_URL: redis://localhost:6379/0
+      REQUIRE_DB_TESTS: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6

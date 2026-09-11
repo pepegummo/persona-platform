@@ -58,10 +58,10 @@ Tasks
 - Upload warning text (no passwords, API keys, confidential data, other people's messages)
 
 Acceptance
-- [ ] Creating and editing a persona works end to end in the browser
-- [ ] Editing a published version creates a new draft; the old version is unchanged (test)
-- [ ] Non-owners get 403 on mutations (test)
-- [ ] Thai text round-trips correctly (fixture test)
+- [x] Creating and editing a persona works end to end in the browser
+- [x] Editing a published version creates a new draft; the old version is unchanged (test)
+- [x] Non-owners get 403 on mutations (test)
+- [x] Thai text round-trips correctly (fixture test)
 
 ### M2 — LLM router and compile worker
 

@@ -1,13 +1,15 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.cache import create_redis
 from app.config import Settings, get_settings
 from app.db import create_engine, create_session_factory
-from app.routes import health
+from app.routes import health, me, personas
+from app.services.errors import ServiceError
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -26,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await app.state.engine.dispose()
 
     app = FastAPI(title="Persona Platform API", version="0.1.0", lifespan=lifespan)
+    app.state.settings = settings  # also available before lifespan (tests, CLI)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.web_origin],
@@ -33,7 +36,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.exception_handler(ServiceError)
+    async def service_error_handler(_: Request, exc: ServiceError) -> JSONResponse:
+        return JSONResponse({"detail": exc.message}, status_code=exc.status_code)
+
     app.include_router(health.router)
+    app.include_router(me.router)
+    app.include_router(personas.router)
     return app
 
 
