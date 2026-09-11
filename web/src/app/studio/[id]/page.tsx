@@ -6,7 +6,9 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { ChatPanel } from "@/components/chat/chat-panel";
 import { ExamplesPanel } from "@/components/persona/examples-panel";
+import { PublishPanel } from "@/components/persona/publish-panel";
 import { SettingsForm } from "@/components/persona/settings-form";
 import { StyleCardPanel } from "@/components/persona/style-card-panel";
 import { RequireAuth } from "@/components/require-auth";
@@ -17,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  API_URL,
   errorMessage,
   type ExampleCreate,
   type ExampleUpdate,
@@ -24,12 +27,14 @@ import {
   type PersonaUpdate,
 } from "@/lib/api/client";
 import { useApi } from "@/lib/api/use-api";
+import { useAuthState } from "@/lib/auth/context";
 
 const POLL_MS = 2000;
 
 function Editor({ id }: { id: string }) {
   const t = useTranslations();
   const api = useApi();
+  const { getToken } = useAuthState();
   const [persona, setPersona] = useState<Persona | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -141,6 +146,8 @@ function Editor({ id }: { id: string }) {
             {t("persona.tabs.examples")} ({draft.examples.length})
           </TabsTrigger>
           <TabsTrigger value="style">{t("persona.compile.styleCard")}</TabsTrigger>
+          <TabsTrigger value="test">{t("persona.tabs.test")}</TabsTrigger>
+          <TabsTrigger value="publish">{t("persona.tabs.publish")}</TabsTrigger>
         </TabsList>
         <TabsContent value="settings" className="pt-4">
           <SettingsForm
@@ -178,6 +185,36 @@ function Editor({ id }: { id: string }) {
         </TabsContent>
         <TabsContent value="style" className="pt-4">
           <StyleCardPanel card={draft.style_card} fixedCount={draft.fixed_example_ids.length} />
+        </TabsContent>
+        <TabsContent value="test" className="flex flex-col gap-3 pt-4">
+          <p className="text-sm text-muted-foreground">{t("persona.test.hint")}</p>
+          {draft.status === "ready" ? (
+            <ChatPanel
+              key={draft.id}
+              url={`${API_URL}/api/personas/${id}/test-chat`}
+              headers={async (): Promise<Record<string, string>> => {
+                const token = await getToken();
+                return token ? { Authorization: `Bearer ${token}` } : {};
+              }}
+            />
+          ) : (
+            <Alert>
+              <AlertDescription>{t("persona.test.needCompile")}</AlertDescription>
+            </Alert>
+          )}
+        </TabsContent>
+        <TabsContent value="publish" className="pt-4">
+          <PublishPanel
+            key={`${persona.published_version_id}-${persona.visibility}`}
+            persona={persona}
+            busy={busy}
+            onPublish={(visibility) =>
+              run(() =>
+                api.POST("/api/personas/{persona_id}/publish", { ...path, body: { visibility } }),
+              )
+            }
+            onUnpublish={() => run(() => api.POST("/api/personas/{persona_id}/unpublish", path))}
+          />
         </TabsContent>
       </Tabs>
     </div>

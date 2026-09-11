@@ -84,9 +84,25 @@ class MemoryRedis:
 
     def __init__(self) -> None:
         self.data: dict[str, str] = {}
+        self.ttls: dict[str, int] = {}
 
     async def get(self, key: str) -> str | None:
         return self.data.get(key)
 
     async def set(self, key: str, value: str, ex: int | None = None) -> None:
         self.data[key] = value
+
+    async def incr(self, key: str) -> int:
+        value = int(self.data.get(key, "0")) + 1
+        self.data[key] = str(value)
+        return value
+
+    async def expire(self, key: str, ttl: int) -> None:
+        self.ttls[key] = ttl
+
+    async def ttl(self, key: str) -> int:
+        return self.ttls.get(key, -1)
+
+    async def delete(self, *keys: str) -> None:
+        for k in keys:
+            self.data.pop(k, None)

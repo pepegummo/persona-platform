@@ -2,11 +2,13 @@
 
 import uuid
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Request, status
+from sse_starlette.sse import EventSourceResponse
 
 from app.auth import CurrentUser
-from app.deps import DbDep, QueueDep
+from app.deps import DbDep, QueueDep, RedisDep
 from app.models import Persona
+from app.schemas.chat import ChatIn, PublishIn
 from app.schemas.persona import (
     ExampleCreate,
     ExampleOut,
@@ -19,6 +21,8 @@ from app.schemas.persona import (
     VersionSummary,
 )
 from app.services import persona as svc
+from app.services.chat import ChatRequest, ChatService
+from app.services.errors import InvalidStateError
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
@@ -106,3 +110,54 @@ async def compile_persona(
     version = await svc.start_compile(db, persona)
     await queue.enqueue_job("compile_version", str(version.id))
     return VersionSummary.model_validate(version)
+
+
+@router.post("/{persona_id}/publish", response_model=PersonaOut)
+async def publish_persona(
+    persona_id: uuid.UUID, data: PublishIn, user: CurrentUser, db: DbDep, redis: RedisDep
+) -> PersonaOut:
+    """Publish the latest compiled version with the given visibility (unlisted by default)."""
+    persona = await svc.get_owned_persona(db, persona_id, user)
+    persona = await svc.publish(db, persona, data.visibility)
+    await redis.delete(f"slug:{persona.slug}")
+    return to_persona_out(persona)
+
+
+@router.post("/{persona_id}/unpublish", response_model=PersonaOut)
+async def unpublish_persona(
+    persona_id: uuid.UUID, user: CurrentUser, db: DbDep, redis: RedisDep
+) -> PersonaOut:
+    persona = await svc.get_owned_persona(db, persona_id, user)
+    persona = await svc.unpublish(db, persona)
+    await redis.delete(f"slug:{persona.slug}")
+    return to_persona_out(persona)
+
+
+@router.post("/{persona_id}/test-chat")
+async def test_chat(
+    persona_id: uuid.UUID,
+    data: ChatIn,
+    user: CurrentUser,
+    db: DbDep,
+    request: Request,
+) -> EventSourceResponse:
+    """Owner test chat (SSE). May use private examples; never rate limited beyond the spend cap."""
+    persona = await svc.get_owned_persona(db, persona_id, user)
+    version = svc.latest_version(persona)
+    if version.status != "ready":
+        raise InvalidStateError("Compile the persona before testing / กรุณาประมวลผลก่อนทดสอบ")
+    chat = ChatService(
+        request.app.state.session_factory,
+        request.app.state.router,
+        request.app.state.guardrails,
+        request.app.state.settings,
+    )
+    req = ChatRequest(
+        version_id=version.id,
+        owner_id=persona.owner_id,
+        message=data.message,
+        conversation_id=data.conversation_id,
+        is_owner=True,
+        user_id=user.id,
+    )
+    return EventSourceResponse(chat.stream(req))

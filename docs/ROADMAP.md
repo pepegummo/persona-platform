@@ -94,11 +94,11 @@ Tasks
 - Publish is blocked with a clear message if the version has fewer than 3 public examples
 
 Acceptance
-- [ ] A visitor can open a share link and chat with streaming answers
-- [ ] Label is visible on every public chat
-- [ ] Visitor context never contains private examples (test inspects the built prompt)
-- [ ] Private persona returns 404 to non-owners; unlisted is not listed but works by link
-- [ ] Rate limit returns 429 with a friendly Thai/English message
+- [x] A visitor can open a share link and chat with streaming answers
+- [x] Label is visible on every public chat
+- [x] Visitor context never contains private examples (test inspects the built prompt)
+- [x] Private persona returns 404 to non-owners; unlisted is not listed but works by link
+- [x] Rate limit returns 429 with a friendly Thai/English message
 
 ### M4a — Moderation and launch basics
 

@@ -126,3 +126,38 @@ async def db(test_database_url: str, app: FastAPI) -> AsyncIterator[AsyncSession
 def auth(user_id: str = "alice") -> dict[str, str]:
     """Authorization header for the dev bypass user `dev:<user_id>`."""
     return {"Authorization": f"Bearer dev:{user_id}"}
+
+
+@pytest.fixture
+def chat_app(app: FastAPI, db: AsyncSession, settings: Settings) -> FastAPI:
+    """App wired for chat routes without the lifespan: fake LLM, no guardrails, memory redis."""
+    from app.llm.providers import FakeProvider
+    from app.llm.router import LLMRouter
+    from app.services.guardrails import GuardrailPipeline
+    from tests.llm_stubs import MemoryRedis
+
+    app.state.session_factory = app.state.test_session_factory
+    app.state.router = LLMRouter(settings, app.state.session_factory, provider=FakeProvider(1024))
+    app.state.guardrails = GuardrailPipeline()
+    app.state.redis = MemoryRedis()
+    return app
+
+
+def parse_sse(body: str) -> list[tuple[str, dict[str, object]]]:
+    """Turn an SSE body into (event, data) pairs."""
+    import json
+
+    events: list[tuple[str, dict[str, object]]] = []
+    name, data = "message", ""
+    for line in body.splitlines():
+        if line.startswith("event:"):
+            name = line[6:].strip()
+        elif line.startswith("data:"):
+            data += line[5:].strip()
+        elif line == "":
+            if data:
+                events.append((name, json.loads(data)))
+            name, data = "message", ""
+    if data:
+        events.append((name, json.loads(data)))
+    return events

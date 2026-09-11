@@ -252,3 +252,46 @@ async def start_compile(db: AsyncSession, persona: Persona) -> PersonaVersion:
     version.compiled_at = None
     await db.commit()
     return version
+
+
+MIN_PUBLIC_EXAMPLES = 3
+
+
+def public_example_count(version: PersonaVersion) -> int:
+    return sum(1 for e in version.examples if not e.is_private or e.synthetic_of is not None)
+
+
+async def publish(db: AsyncSession, persona: Persona, visibility: str) -> Persona:
+    """Point the persona at its latest version. Requires status ready and >= 3 public examples."""
+    version = latest_version(persona)
+    if version.status != "ready":
+        raise InvalidStateError(
+            "Compile the persona before publishing / กรุณาประมวลผล persona ก่อนเผยแพร่"
+        )
+    n = public_example_count(version)
+    if n < MIN_PUBLIC_EXAMPLES:
+        raise InvalidStateError(
+            f"Publishing needs at least {MIN_PUBLIC_EXAMPLES} public examples (you have {n}). "
+            f"Visitors only ever see public examples. / "
+            f"ต้องมีตัวอย่างสาธารณะอย่างน้อย {MIN_PUBLIC_EXAMPLES} รายการก่อนเผยแพร่ (ตอนนี้มี {n})"
+        )
+    persona.published_version_id = version.id
+    persona.visibility = visibility
+    await db.commit()
+    return await get_persona(db, persona.id)
+
+
+async def unpublish(db: AsyncSession, persona: Persona) -> Persona:
+    persona.published_version_id = None
+    persona.visibility = "private"
+    await db.commit()
+    return await get_persona(db, persona.id)
+
+
+async def get_published_by_slug(db: AsyncSession, slug: str) -> tuple[Persona, PersonaVersion]:
+    """Published persona for a share link. Private personas look like they do not exist."""
+    persona = await db.scalar(select(Persona).where(Persona.slug == slug).options(*_LOAD_ALL))
+    if persona is None or persona.published_version_id is None:
+        raise NotFoundError("Persona not found")
+    version = next(v for v in persona.versions if v.id == persona.published_version_id)
+    return persona, version

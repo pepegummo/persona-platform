@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     web_origin: str = "http://localhost:3000"
 
+    # Signs the anonymous visitor cookie. Set a long random value in production.
+    secret_key: str = "dev-secret-change-me"
+    # Newest N messages sent back to the model as history.
+    chat_history_messages: int = 12
+    chat_max_output_tokens: int = 1024
+
     # --- Auth (Clerk) ---
     app_env: Literal["development", "test", "production"] = "development"
     clerk_publishable_key: str = ""

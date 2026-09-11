@@ -57,7 +57,9 @@
     "create": "Create",
     "tabs": {
       "settings": "Settings",
-      "examples": "Examples"
+      "examples": "Examples",
+      "test": "Test",
+      "publish": "Publish"
     },
     "settings": {
       "title": "Answering style",
@@ -133,10 +135,43 @@
       "avoid": "Avoids",
       "conflicts": "Settings vs examples conflicts",
       "fixedExamples": "{n} fixed examples"
+    },
+    "test": {
+      "hint": "Testing as the owner: all examples are used, including private ones (visitors only get public ones)",
+      "needCompile": "Compile before testing"
+    },
+    "publish": {
+      "hint": "Publish the latest compiled version. Visitors chat with it until you publish again.",
+      "needCompile": "Compile before publishing",
+      "needPublic": "At least 3 public examples are required (you have {n}) — visitors only ever see public examples",
+      "visibility": "Visibility",
+      "visibilityHint": "Unlisted = anyone with the link / Public = discoverable later",
+      "publish": "Publish",
+      "republish": "Publish this version",
+      "unpublish": "Unpublish",
+      "shareLink": "Share link",
+      "copy": "Copy",
+      "copied": "Copied",
+      "open": "Open",
+      "live": "Live: version {v} · {visibility}"
     }
   },
   "health": {
     "label": "API status",
     "refresh": "Refresh"
+  },
+  "chat": {
+    "placeholder": "Type a question… (Enter to send, Shift+Enter for a new line)",
+    "send": "Send",
+    "sending": "Answering…",
+    "newChat": "New chat",
+    "empty": "No messages yet — ask something",
+    "networkError": "Could not connect. Please try again."
+  },
+  "public": {
+    "label": "AI version of {name}",
+    "disclaimer": "This is an AI imitating an answering style, not the real person. It can be wrong and does not know their personal life.",
+    "ownerCanRead": "The persona owner can read this conversation",
+    "ownerCannotRead": "The persona owner only sees aggregate stats, not your messages"
   }
 }
