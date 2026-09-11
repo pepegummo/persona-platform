@@ -5,7 +5,7 @@ import uuid
 from fastapi import APIRouter, status
 
 from app.auth import CurrentUser
-from app.deps import DbDep
+from app.deps import DbDep, QueueDep
 from app.models import Persona
 from app.schemas.persona import (
     ExampleCreate,
@@ -95,3 +95,14 @@ async def delete_example(
 ) -> None:
     persona = await svc.get_owned_persona(db, persona_id, user)
     await svc.delete_example(db, persona, example_id)
+
+
+@router.post("/{persona_id}/compile", response_model=VersionSummary, status_code=202)
+async def compile_persona(
+    persona_id: uuid.UUID, user: CurrentUser, db: DbDep, queue: QueueDep
+) -> VersionSummary:
+    """Compile the latest draft: style card, shape tags, embeddings, fixed examples."""
+    persona = await svc.get_owned_persona(db, persona_id, user)
+    version = await svc.start_compile(db, persona)
+    await queue.enqueue_job("compile_version", str(version.id))
+    return VersionSummary.model_validate(version)

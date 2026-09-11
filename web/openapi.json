@@ -415,6 +415,55 @@
           }
         }
       }
+    },
+    "/api/personas/{persona_id}/compile": {
+      "post": {
+        "tags": [
+          "personas"
+        ],
+        "summary": "Compile Persona",
+        "description": "Compile the latest draft: style card, shape tags, embeddings, fixed examples.",
+        "operationId": "compile_persona_api_personas__persona_id__compile_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "persona_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Persona Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

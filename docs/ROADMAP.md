@@ -75,10 +75,10 @@ Tasks
 - "Save & compile" button with status polling
 
 Acceptance
-- [ ] Compiling a persona with the Kafka vs MQTT example produces a valid style card JSON
-- [ ] Every example has a shape and an embedding after compile
-- [ ] Spend cap blocks calls once exceeded (unit test with mocked costs)
-- [ ] Router falls back when the primary model returns 429 (unit test)
+- [x] Compiling a persona with the Kafka vs MQTT example produces a valid style card JSON
+- [x] Every example has a shape and an embedding after compile
+- [x] Spend cap blocks calls once exceeded (unit test with mocked costs)
+- [x] Router falls back when the primary model returns 429 (unit test)
 
 ### M3 — Simple mode chat and public page
 

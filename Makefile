@@ -2,17 +2,20 @@
 # Requires: docker compose, uv (api), pnpm (web), GNU make 4+.
 # Recipes are plain commands so they work in cmd.exe, PowerShell, and sh.
 
-.PHONY: dev api web infra down test test-api test-web lint lint-api lint-web migrate gen-client
+.PHONY: dev api web worker infra down test test-api test-web lint lint-api lint-web migrate gen-client
 
-## Run everything: Postgres + Redis in Docker, api (:8000) and web (:3000) as local processes.
+## Run everything: Postgres + Redis in Docker; api (:8000), worker, and web (:3000) as local processes.
 dev: infra
-	$(MAKE) -j2 api web
+	$(MAKE) -j3 api worker web
 
 infra:
 	docker compose up -d --wait db redis
 
 api:
 	cd api && uv run uvicorn app.main:app --reload --port 8000
+
+worker:
+	cd api && uv run arq app.workers.settings.WorkerSettings
 
 web:
 	cd web && pnpm dev

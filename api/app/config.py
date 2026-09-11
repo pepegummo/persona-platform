@@ -33,6 +33,26 @@ class Settings(BaseSettings):
     # Dev only: accept `Authorization: Bearer dev:<id>` without Clerk. Never honored in production.
     auth_dev_bypass: bool = False
 
+    # --- LLM providers (keys never leave the backend) ---
+    # "litellm" for real providers; "fake" for local demos and CI (no keys needed).
+    llm_provider: Literal["litellm", "fake"] = "litellm"
+    anthropic_api_key: str = ""
+    openai_api_key: str = ""
+    cohere_api_key: str = ""
+    llm_timeout_s: float = 60.0
+
+    # --- Model routing (LiteLLM model strings) ---
+    model_compile: str = "anthropic/claude-sonnet-5"
+    model_synth_rewrite: str = "anthropic/claude-sonnet-5"
+    model_shape_classify: str = "anthropic/claude-haiku-4-5-20251001"
+    model_chat_simple: str = "anthropic/claude-haiku-4-5-20251001"
+    model_chat_like_me: str = "anthropic/claude-sonnet-5"
+    model_judge: str = ""
+    model_moderation: str = "anthropic/claude-haiku-4-5-20251001"
+    model_fallback: str = ""
+    embedding_model: str = "cohere/embed-multilingual-v3.0"
+    embedding_dim: int = 1024
+
     # --- Feature flags (all off in Phase 1A) ---
     feature_eval: bool = False
     feature_synth_rewrite: bool = False

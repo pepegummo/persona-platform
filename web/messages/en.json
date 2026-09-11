@@ -115,7 +115,25 @@
       "shape": "Shape",
       "publicCount": "{n} of {total} public"
     },
-    "newVersionNotice": "This persona is published. Edits create a new draft version; the shared link keeps using the published version until you publish again."
+    "newVersionNotice": "This persona is published. Edits create a new draft version; the shared link keeps using the published version until you publish again.",
+    "compile": {
+      "button": "Compile",
+      "compiling": "Compiling…",
+      "done": "Compiled",
+      "failed": "Compile failed — try again",
+      "hint": "Compile to build the style card, tag question shapes, and pick fixed examples. Do it after every edit.",
+      "styleCard": "Style card",
+      "noStyleCard": "No style card yet — compile first",
+      "summary": "Summary",
+      "language": "Language",
+      "length": "Length",
+      "structure": "Structure",
+      "formatting": "Formatting",
+      "vocabulary": "Vocabulary",
+      "avoid": "Avoids",
+      "conflicts": "Settings vs examples conflicts",
+      "fixedExamples": "{n} fixed examples"
+    }
   },
   "health": {
     "label": "API status",

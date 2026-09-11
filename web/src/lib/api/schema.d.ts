@@ -112,6 +112,26 @@ export interface paths {
         patch: operations["update_example_api_personas__persona_id__examples__example_id__patch"];
         trace?: never;
     };
+    "/api/personas/{persona_id}/compile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Compile Persona
+         * @description Compile the latest draft: style card, shape tags, embeddings, fixed examples.
+         */
+        post: operations["compile_persona_api_personas__persona_id__compile_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -704,6 +724,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExampleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compile_persona_api_personas__persona_id__compile_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                persona_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionSummary"];
                 };
             };
             /** @description Validation Error */

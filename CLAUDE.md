@@ -10,7 +10,7 @@ Specs only. Build milestone by milestone following `docs/ROADMAP.md`.
 
 - **Current target: Phase 1A — Lean MVP** (M0 → M1 → M2 → M3 → M4a), then STOP at the
   Launch checkpoint. Do not build Phase 1B, X1, or later phases unless explicitly asked.
-- Current milestone: **M2 — LLM router and compile worker** (M0, M1 done). Update this line when a milestone is done.
+- Current milestone: **M3 — Simple mode chat and public page** (M0–M2 done). Update this line when a milestone is done.
 - Later features stay behind flags (`FEATURE_EVAL`, `FEATURE_SYNTH_REWRITE`, `FEATURE_LIKE_ME`,
   `FEATURE_EXPORT`), all off in Phase 1A.
 
@@ -54,7 +54,7 @@ Prereqs: Docker Desktop, `uv`, `pnpm`, GNU `make`. Copy `.env.example` → `.env
 
 | Command | What it does |
 |---|---|
-| `make dev` | Postgres + Redis in Docker, then api (:8000) and web (:3000) as local processes |
+| `make dev` | Postgres + Redis in Docker, then api (:8000), Arq worker, and web (:3000) as local processes |
 | `make infra` / `make down` | Start / stop only the Docker services |
 | `make test` | `pytest` (api) + `tsc --noEmit` (web) |
 | `make lint` | ruff check + format check + mypy (api), eslint (web) |

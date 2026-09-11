@@ -23,7 +23,7 @@ from app.schemas.persona import (
     PersonaListItem,
     PersonaUpdate,
 )
-from app.services.errors import ConflictError, ForbiddenError, NotFoundError
+from app.services.errors import ConflictError, ForbiddenError, InvalidStateError, NotFoundError
 
 _LOAD_ALL = (selectinload(Persona.versions).selectinload(PersonaVersion.examples),)
 
@@ -235,3 +235,20 @@ async def delete_example(db: AsyncSession, persona: Persona, example_id: uuid.UU
     version, example = await _editable_example(db, persona, example_id)
     version.examples.remove(example)
     await db.commit()
+
+
+async def start_compile(db: AsyncSession, persona: Persona) -> PersonaVersion:
+    """Mark the latest version as compiling. The caller enqueues the job after commit."""
+    version = latest_version(persona)
+    if version.status == "compiling":
+        raise InvalidStateError("This version is already compiling")
+    if version.id == persona.published_version_id:
+        raise InvalidStateError("Published versions are immutable; edit to create a new draft")
+    if not [e for e in version.examples if e.synthetic_of is None]:
+        raise InvalidStateError("Add at least one example before compiling")
+    version.status = "compiling"
+    version.style_card = None
+    version.fixed_example_ids = []
+    version.compiled_at = None
+    await db.commit()
+    return version

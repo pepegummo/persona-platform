@@ -114,6 +114,7 @@ async def db(test_database_url: str, app: FastAPI) -> AsyncIterator[AsyncSession
             yield session
 
         app.dependency_overrides[get_db] = _override
+        app.state.test_session_factory = factory
         try:
             yield session
         finally:

@@ -8,6 +8,8 @@ from fastapi.responses import JSONResponse
 from app.cache import create_redis
 from app.config import Settings, get_settings
 from app.db import create_engine, create_session_factory
+from app.llm.router import LLMRouter
+from app.queue import create_queue
 from app.routes import health, me, personas
 from app.services.errors import ServiceError
 
@@ -21,9 +23,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.engine = create_engine(settings.database_url)
         app.state.session_factory = create_session_factory(app.state.engine)
         app.state.redis = create_redis(settings.redis_url)
+        app.state.queue = await create_queue(settings.redis_url)
+        app.state.router = LLMRouter(settings, app.state.session_factory)
         try:
             yield
         finally:
+            await app.state.queue.aclose()
             await app.state.redis.aclose()
             await app.state.engine.dispose()
 
