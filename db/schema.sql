@@ -130,3 +130,32 @@ CREATE TABLE likes (                                    -- Phase 2 (M8)
     created_at  timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, persona_id)
 );
+
+-- Launch analytics (M4a). Read with db/metrics.sql.
+CREATE TABLE events (
+    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name                text NOT NULL,                  -- persona_created | persona_published |
+                                                        -- share_link_opened | visitor_message_sent
+    persona_id          uuid REFERENCES personas(id) ON DELETE SET NULL,
+    persona_version_id  uuid,
+    conversation_id     uuid,
+    user_id             uuid,
+    visitor_id          text,
+    props               jsonb NOT NULL DEFAULT '{}',
+    created_at          timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX events_name_created_idx ON events (name, created_at);
+CREATE INDEX events_persona_idx ON events (persona_id);
+
+-- Visitor reports from the public persona page (M4a). Reviewed manually for now.
+CREATE TABLE reports (
+    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    persona_id          uuid NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
+    persona_version_id  uuid,
+    conversation_id     uuid,
+    visitor_id          text,
+    user_id             uuid,
+    reason              text NOT NULL,                  -- impersonation | harmful | spam | privacy | other
+    details             text,
+    created_at          timestamptz NOT NULL DEFAULT now()
+);

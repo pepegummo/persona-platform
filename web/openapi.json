@@ -774,6 +774,105 @@
           }
         }
       }
+    },
+    "/api/public/p/{slug}/open": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Share Link Opened",
+        "description": "Called by the persona page on load: sets the visitor cookie and records the open event.",
+        "operationId": "share_link_opened_api_public_p__slug__open_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/p/{slug}/report": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Report Persona",
+        "description": "Visitor report. Stored for review; the owner is not notified automatically.",
+        "operationId": "report_persona_api_public_p__slug__report_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1482,6 +1581,64 @@
         },
         "type": "object",
         "title": "PublishIn"
+      },
+      "ReportIn": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "impersonation",
+              "harmful",
+              "spam",
+              "privacy",
+              "other"
+            ],
+            "title": "Reason"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "ReportIn"
+      },
+      "ReportOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "ReportOut"
       },
       "UserOut": {
         "properties": {

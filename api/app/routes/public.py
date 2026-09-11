@@ -6,7 +6,9 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.auth import OptionalUser
 from app.deps import DbDep, RedisDep, SettingsDep
-from app.schemas.chat import ChatIn, PublicExampleOut, PublicPersonaOut
+from app.models import Report
+from app.schemas.chat import ChatIn, PublicExampleOut, PublicPersonaOut, ReportIn, ReportOut
+from app.services import analytics
 from app.services import persona as svc
 from app.services.chat import ChatRequest, ChatService
 from app.services.context import visible_examples
@@ -70,14 +72,15 @@ async def public_chat(
         raise NotFoundError("Persona not found")
     visitor_id = get_or_create_visitor(request, response, settings)
     await check_visitor_limits(redis, settings, visitor_id=visitor_id, persona_id=persona.id)
+    guardrails = request.app.state.make_guardrails(
+        billed_user_id=persona.owner_id, persona_version_id=version.id
+    )
     chat = ChatService(
-        request.app.state.session_factory,
-        request.app.state.router,
-        request.app.state.guardrails,
-        settings,
+        request.app.state.session_factory, request.app.state.router, guardrails, settings
     )
     req = ChatRequest(
         version_id=version.id,
+        persona_id=persona.id,
         owner_id=persona.owner_id,
         message=data.message,
         conversation_id=data.conversation_id,
@@ -86,3 +89,63 @@ async def public_chat(
         visitor_id=visitor_id,
     )
     return EventSourceResponse(chat.stream(req), headers=dict(response.headers))
+
+
+@router.post("/{slug}/open", status_code=204)
+async def share_link_opened(
+    slug: str,
+    request: Request,
+    response: Response,
+    db: DbDep,
+    redis: RedisDep,
+    settings: SettingsDep,
+    user: OptionalUser,
+) -> Response:
+    """Called by the persona page on load: sets the visitor cookie and records the open event."""
+    persona, version = await svc.get_published_by_slug(db, slug)
+    if persona.visibility == "private":
+        raise NotFoundError("Persona not found")
+    visitor_id = get_or_create_visitor(request, response, settings)
+    await check_visitor_limits(redis, settings, visitor_id=visitor_id, persona_id=persona.id)
+    await analytics.record(
+        db,
+        "share_link_opened",
+        persona_id=persona.id,
+        persona_version_id=version.id,
+        user_id=user.id if user else None,
+        visitor_id=visitor_id,
+    )
+    await db.commit()
+    response.status_code = 204
+    return response
+
+
+@router.post("/{slug}/report", response_model=ReportOut, status_code=201)
+async def report_persona(
+    slug: str,
+    data: ReportIn,
+    request: Request,
+    response: Response,
+    db: DbDep,
+    redis: RedisDep,
+    settings: SettingsDep,
+    user: OptionalUser,
+) -> ReportOut:
+    """Visitor report. Stored for review; the owner is not notified automatically."""
+    persona, version = await svc.get_published_by_slug(db, slug)
+    if persona.visibility == "private":
+        raise NotFoundError("Persona not found")
+    visitor_id = get_or_create_visitor(request, response, settings)
+    await check_visitor_limits(redis, settings, visitor_id=visitor_id, persona_id=persona.id)
+    report = Report(
+        persona_id=persona.id,
+        persona_version_id=version.id,
+        conversation_id=data.conversation_id,
+        visitor_id=visitor_id,
+        user_id=user.id if user else None,
+        reason=data.reason,
+        details=data.details,
+    )
+    db.add(report)
+    await db.commit()
+    return ReportOut(id=report.id)

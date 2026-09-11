@@ -21,6 +21,7 @@ from app.llm.providers import Message
 from app.llm.router import CallContext, LLMRouter, Task
 from app.models import Conversation, PersonaVersion
 from app.models import Message as MessageRow
+from app.services import analytics
 from app.services.context import strategy_for
 from app.services.errors import NotFoundError, ServiceError
 from app.services.guardrails import (
@@ -36,6 +37,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class ChatRequest:
     version_id: uuid.UUID
+    persona_id: uuid.UUID
     owner_id: uuid.UUID
     message: str
     conversation_id: uuid.UUID | None
@@ -118,6 +120,16 @@ class ChatService:
                     blocked_reason=None if verdict.ok else verdict.reason,
                 )
             )
+            if not req.is_owner:
+                await analytics.record(
+                    db,
+                    "visitor_message_sent",
+                    persona_id=req.persona_id,
+                    persona_version_id=req.version_id,
+                    conversation_id=conv.id,
+                    user_id=req.user_id,
+                    visitor_id=req.visitor_id,
+                )
             await db.commit()
             conversation_id = conv.id
 

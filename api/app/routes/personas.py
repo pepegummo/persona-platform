@@ -146,14 +146,18 @@ async def test_chat(
     version = svc.latest_version(persona)
     if version.status != "ready":
         raise InvalidStateError("Compile the persona before testing / กรุณาประมวลผลก่อนทดสอบ")
+    guardrails = request.app.state.make_guardrails(
+        billed_user_id=persona.owner_id, persona_version_id=version.id
+    )
     chat = ChatService(
         request.app.state.session_factory,
         request.app.state.router,
-        request.app.state.guardrails,
+        guardrails,
         request.app.state.settings,
     )
     req = ChatRequest(
         version_id=version.id,
+        persona_id=persona.id,
         owner_id=persona.owner_id,
         message=data.message,
         conversation_id=data.conversation_id,

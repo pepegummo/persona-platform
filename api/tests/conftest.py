@@ -138,7 +138,7 @@ def chat_app(app: FastAPI, db: AsyncSession, settings: Settings) -> FastAPI:
 
     app.state.session_factory = app.state.test_session_factory
     app.state.router = LLMRouter(settings, app.state.session_factory, provider=FakeProvider(1024))
-    app.state.guardrails = GuardrailPipeline()
+    app.state.make_guardrails = lambda **kw: GuardrailPipeline()
     app.state.redis = MemoryRedis()
     return app
 

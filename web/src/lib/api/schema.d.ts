@@ -249,6 +249,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/p/{slug}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Share Link Opened
+         * @description Called by the persona page on load: sets the visitor cookie and records the open event.
+         */
+        post: operations["share_link_opened_api_public_p__slug__open_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/p/{slug}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report Persona
+         * @description Visitor report. Stored for review; the owner is not notified automatically.
+         */
+        post: operations["report_persona_api_public_p__slug__report_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -533,6 +573,26 @@ export interface components {
              * @enum {string}
              */
             visibility?: "private" | "unlisted" | "public";
+        };
+        /** ReportIn */
+        ReportIn: {
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "impersonation" | "harmful" | "spam" | "privacy" | "other";
+            /** Details */
+            details?: string | null;
+            /** Conversation Id */
+            conversation_id?: string | null;
+        };
+        /** ReportOut */
+        ReportOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
         };
         /** UserOut */
         UserOut: {
@@ -1121,6 +1181,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    share_link_opened_api_public_p__slug__open_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_persona_api_public_p__slug__report_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOut"];
                 };
             };
             /** @description Validation Error */

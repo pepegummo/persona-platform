@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     embedding_model: str = "cohere/embed-multilingual-v3.0"
     embedding_dim: int = 1024
 
+    # Input/output moderation via the LLM classifier (M4a). Only disable for local demos.
+    moderation_enabled: bool = True
+
     # --- Feature flags (all off in Phase 1A) ---
     feature_eval: bool = False
     feature_synth_rewrite: bool = False

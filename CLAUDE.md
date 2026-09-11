@@ -10,7 +10,7 @@ Specs only. Build milestone by milestone following `docs/ROADMAP.md`.
 
 - **Current target: Phase 1A — Lean MVP** (M0 → M1 → M2 → M3 → M4a), then STOP at the
   Launch checkpoint. Do not build Phase 1B, X1, or later phases unless explicitly asked.
-- Current milestone: **M4a — Moderation and launch basics** (M0–M3 done). Update this line when a milestone is done.
+- Current milestone: **LAUNCH CHECKPOINT** — Phase 1A (M0–M4a) is built. Do not start M4b/M5/M6/X1 until the checkpoint decision in `docs/ROADMAP.md` is made.
 - Later features stay behind flags (`FEATURE_EVAL`, `FEATURE_SYNTH_REWRITE`, `FEATURE_LIKE_ME`,
   `FEATURE_EXPORT`), all off in Phase 1A.
 
@@ -59,6 +59,7 @@ Prereqs: Docker Desktop, `uv`, `pnpm`, GNU `make`. Copy `.env.example` → `.env
 | `make test` | `pytest` (api) + `tsc --noEmit` (web) |
 | `make lint` | ruff check + format check + mypy (api), eslint (web) |
 | `make migrate` | `alembic upgrade head` (needs `make infra`) |
+| `db/metrics.sql` | The three launch-checkpoint queries; run with `psql` against the production DB |
 | `make gen-client` | Dump OpenAPI from the api (`python -m app.cli openapi`) → `web/openapi.json` → `web/src/lib/api/schema.d.ts`. Run after any route/schema change; CI fails if it is stale |
 
 Per-package: `cd api && uv run …`, `cd web && pnpm …`.

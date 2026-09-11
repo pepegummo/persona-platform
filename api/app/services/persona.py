@@ -23,6 +23,7 @@ from app.schemas.persona import (
     PersonaListItem,
     PersonaUpdate,
 )
+from app.services import analytics
 from app.services.errors import ConflictError, ForbiddenError, InvalidStateError, NotFoundError
 
 _LOAD_ALL = (selectinload(Persona.versions).selectinload(PersonaVersion.examples),)
@@ -61,9 +62,12 @@ async def get_owned_persona(db: AsyncSession, persona_id: uuid.UUID, user: User)
     return persona
 
 
-async def _commit_or_conflict(db: AsyncSession, what: str) -> None:
+async def _commit_or_conflict(db: AsyncSession, what: str, *, flush_only: bool = False) -> None:
     try:
-        await db.commit()
+        if flush_only:
+            await db.flush()
+        else:
+            await db.commit()
     except IntegrityError as e:
         await db.rollback()
         if "slug" in str(e.orig):
@@ -72,7 +76,7 @@ async def _commit_or_conflict(db: AsyncSession, what: str) -> None:
 
 
 async def create_persona(db: AsyncSession, owner: User, data: PersonaCreate) -> Persona:
-    persona = Persona(owner_id=owner.id, slug=data.slug or _random_slug())
+    persona = Persona(id=uuid.uuid4(), owner_id=owner.id, slug=data.slug or _random_slug())
     persona.versions.append(
         PersonaVersion(
             version_number=1,
@@ -85,6 +89,8 @@ async def create_persona(db: AsyncSession, owner: User, data: PersonaCreate) -> 
         )
     )
     db.add(persona)
+    await _commit_or_conflict(db, "persona", flush_only=True)
+    await analytics.record(db, "persona_created", persona_id=persona.id, user_id=owner.id)
     await _commit_or_conflict(db, "persona")
     return await get_persona(db, persona.id)
 
@@ -277,6 +283,14 @@ async def publish(db: AsyncSession, persona: Persona, visibility: str) -> Person
         )
     persona.published_version_id = version.id
     persona.visibility = visibility
+    await analytics.record(
+        db,
+        "persona_published",
+        persona_id=persona.id,
+        persona_version_id=version.id,
+        user_id=persona.owner_id,
+        props={"visibility": visibility, "version_number": version.version_number},
+    )
     await db.commit()
     return await get_persona(db, persona.id)
 

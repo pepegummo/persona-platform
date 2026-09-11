@@ -12,7 +12,7 @@ from app.llm.router import LLMRouter
 from app.queue import create_queue
 from app.routes import health, me, personas, public
 from app.services.errors import ServiceError
-from app.services.guardrails import GuardrailPipeline, build_guardrails
+from app.services.guardrails_setup import make_pipeline_factory
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -26,7 +26,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.redis = create_redis(settings.redis_url)
         app.state.queue = await create_queue(settings.redis_url)
         app.state.router = LLMRouter(settings, app.state.session_factory)
-        app.state.guardrails = GuardrailPipeline(build_guardrails(settings, app.state.router))
+        app.state.make_guardrails = make_pipeline_factory(settings, app.state.router)
         try:
             yield
         finally:

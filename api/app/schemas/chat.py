@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -33,3 +34,16 @@ class PublicPersonaOut(BaseModel):
 class PublicExampleOut(BaseModel):
     question: str
     answer: str
+
+
+ReportReason = Literal["impersonation", "harmful", "spam", "privacy", "other"]
+
+
+class ReportIn(BaseModel):
+    reason: ReportReason
+    details: str | None = Field(default=None, max_length=2000)
+    conversation_id: uuid.UUID | None = None
+
+
+class ReportOut(BaseModel):
+    id: uuid.UUID

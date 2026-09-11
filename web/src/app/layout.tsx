@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth/context";
@@ -30,6 +31,7 @@ export default async function RootLayout({
           <AuthProvider>
             <SiteHeader />
             {children}
+            <SiteFooter />
             <Toaster />
           </AuthProvider>
         </NextIntlClientProvider>

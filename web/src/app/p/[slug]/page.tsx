@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { PublicChat } from "@/components/chat/public-chat";
+import { ReportDialog } from "@/components/chat/report-dialog";
 import { Badge } from "@/components/ui/badge";
 import { API_URL, type Schemas } from "@/lib/api/client";
 
@@ -54,6 +55,9 @@ export default async function PublicPersonaPage({
         )}
       </header>
       <PublicChat slug={persona.slug} />
+      <div className="flex justify-end">
+        <ReportDialog slug={persona.slug} />
+      </div>
     </main>
   );
 }

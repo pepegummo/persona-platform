@@ -111,8 +111,8 @@ Tasks
 - Privacy policy + terms pages (state that prompts go to third-party model providers)
 
 Acceptance
-- [ ] A clearly unsafe input is blocked with a friendly message (test, Thai and English)
-- [ ] The three checkpoint metrics below can be computed with one SQL query each
+- [x] A clearly unsafe input is blocked with a friendly message (test, Thai and English)
+- [x] The three checkpoint metrics below can be computed with one SQL query each
 
 ### LAUNCH CHECKPOINT — stop here
 

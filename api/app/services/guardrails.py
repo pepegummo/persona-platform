@@ -104,8 +104,3 @@ class GuardrailPipeline:
         if pending:
             outcome.text += pending
             yield pending
-
-
-def build_guardrails(settings: object, router: object) -> list[Guardrail]:
-    """Guardrails active for this deployment. M4a adds moderation here."""
-    return []
