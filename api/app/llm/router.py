@@ -129,7 +129,16 @@ class LLMRouter:
             "anthropic": self.settings.anthropic_api_key,
             "openai": self.settings.openai_api_key,
             "cohere": self.settings.cohere_api_key,
+            "gemini": self.settings.gemini_api_key,
+            "groq": self.settings.groq_api_key,
         }.get(prefix) or None
+
+    def _fake_embedder(self) -> FakeProvider:
+        fake = getattr(self, "_fake_embedder_instance", None)
+        if fake is None:
+            fake = FakeProvider(embedding_dim=self.settings.embedding_dim)
+            self._fake_embedder_instance = fake
+        return fake
 
     # --- spend cap ----------------------------------------------------------------------------
 
@@ -283,9 +292,13 @@ class LLMRouter:
             return []
         await self._check_spend_cap(ctx.billed_user_id)
         model = self.model_for(Task.embed)
+        # `fake/...` embeddings: deterministic hash vectors, no provider call. Fine until M5
+        # (Like Me retrieval) needs real ones; lets free-tier chat providers without an
+        # embedding model (Groq, Gemini free tier) run the full compile.
+        provider = self._fake_embedder() if model.startswith("fake/") else self.provider
         started = time.perf_counter()
         try:
-            vectors, usage = await self.provider.embed(
+            vectors, usage = await provider.embed(
                 model=model,
                 texts=texts,
                 timeout_s=self.settings.llm_timeout_s,

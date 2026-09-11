@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     openai_api_key: str = ""
     cohere_api_key: str = ""
+    gemini_api_key: str = ""  # Google AI Studio (free tier)
+    groq_api_key: str = ""  # Groq (free tier)
     llm_timeout_s: float = 60.0
 
     # --- Model routing (LiteLLM model strings) ---

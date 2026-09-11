@@ -157,3 +157,27 @@ async def test_stream_falls_back_before_first_token(make_router) -> None:  # typ
     chunks = [c async for c in router.stream(CallContext(Task.chat_simple), MSG)]
     assert "".join(chunks) == "fallback stream"
     assert provider.calls[-1].model == "openai/fallback"
+
+
+def test_api_key_by_model_prefix(app: FastAPI, db: AsyncSession) -> None:
+    settings = Settings(
+        _env_file=None, gemini_api_key="g-key", groq_api_key="q-key", anthropic_api_key="a-key"
+    )
+    router = LLMRouter(settings, app.state.test_session_factory, provider=ScriptedProvider())
+    assert router._api_key("gemini/gemini-2.5-flash") == "g-key"
+    assert router._api_key("groq/llama-3.3-70b-versatile") == "q-key"
+    assert router._api_key("anthropic/claude-sonnet-5") == "a-key"
+    assert router._api_key("openai/gpt-x") is None  # not configured → LiteLLM env fallback
+    assert router._api_key("unknown/model") is None
+
+
+async def test_embed_uses_fake_embedder_for_fake_model(make_router, db: AsyncSession) -> None:  # type: ignore[no-untyped-def]
+    provider = ScriptedProvider()
+    router = make_router(provider)
+    router.settings.embedding_model = "fake/hash"
+    vectors = await router.embed(CallContext(Task.embed), ["สวัสดี", "hello"])
+    assert len(vectors) == 2 and all(len(v) == 1024 for v in vectors)
+    assert vectors[0] != vectors[1]
+    assert provider.calls == []  # the real provider was never asked
+    logged = await calls(db)
+    assert len(logged) == 1 and logged[0].task == "embed" and logged[0].model == "fake/hash"

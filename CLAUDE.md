@@ -50,7 +50,8 @@ docs/                 product, architecture, prompts, roadmap
 ## Commands
 
 Prereqs: Docker Desktop, `uv`, `pnpm`, GNU `make`. Copy `.env.example` → `.env` and
-`web/.env.example` → `web/.env.local`.
+`web/.env.example` → `web/.env.local`. No paid keys needed: `LLM_PROVIDER=fake` runs a built-in
+stub, and the "Free-tier profile" block in `.env.example` runs on Gemini + Groq free tiers.
 
 | Command | What it does |
 |---|---|
