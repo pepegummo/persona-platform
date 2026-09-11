@@ -41,9 +41,9 @@ Tasks
 - Update CLAUDE.md "Commands" with the real commands
 
 Acceptance
-- [ ] `make dev` starts db, redis, api (:8000), web (:3000)
-- [ ] `GET /health` returns `{"status":"ok"}` and checks db + redis
-- [ ] `make test` and `make lint` pass in CI
+- [x] `make dev` starts db, redis, api (:8000), web (:3000)
+- [x] `GET /health` returns `{"status":"ok"}` and checks db + redis
+- [ ] `make test` and `make lint` pass in CI (pass locally; workflow written, needs a push to run)
 
 ### M1 — Data model and persona CRUD
 

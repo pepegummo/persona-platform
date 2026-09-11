@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  api:
+    name: api (lint, test, migrate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: persona
+          POSTGRES_PASSWORD: persona
+          POSTGRES_DB: persona
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U persona -d persona"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://persona:persona@localhost:5432/persona
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy app migrations tests
+      - run: uv run pytest
+      - name: Apply migrations against pgvector
+        run: uv run alembic upgrade head
+      - name: Verify extensions
+        run: |
+          uv run python - <<'PY'
+          import asyncio, asyncpg
+          async def main():
+              c = await asyncpg.connect("postgresql://persona:persona@localhost:5432/persona")
+              names = {r["extname"] for r in await c.fetch("SELECT extname FROM pg_extension")}
+              await c.close()
+              missing = {"vector", "pgcrypto"} - names
+              assert not missing, f"missing extensions: {missing}"
+              print("extensions ok:", sorted(names))
+          asyncio.run(main())
+          PY
+      - name: Generated TS client is up to date
+        run: |
+          uv run python -m app.cli openapi > ../web/openapi.json
+          git diff --exit-code -- ../web/openapi.json
+
+  web:
+    name: web (lint, typecheck, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm gen-client
+      - name: Generated TS client is up to date
+        run: git diff --exit-code -- src/lib/api/schema.d.ts
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build

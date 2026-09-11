@@ -49,8 +49,19 @@ docs/                 product, architecture, prompts, roadmap
 
 ## Commands
 
-To be created in M0. Replace this list with the real commands once they exist:
-`make dev` (compose + api + web), `make test`, `make lint`, `make migrate`, `make gen-client`.
+Prereqs: Docker Desktop, `uv`, `pnpm`, GNU `make`. Copy `.env.example` → `.env` and
+`web/.env.example` → `web/.env.local`.
+
+| Command | What it does |
+|---|---|
+| `make dev` | Postgres + Redis in Docker, then api (:8000) and web (:3000) as local processes |
+| `make infra` / `make down` | Start / stop only the Docker services |
+| `make test` | `pytest` (api) + `tsc --noEmit` (web) |
+| `make lint` | ruff check + format check + mypy (api), eslint (web) |
+| `make migrate` | `alembic upgrade head` (needs `make infra`) |
+| `make gen-client` | Dump OpenAPI from the api (`python -m app.cli openapi`) → `web/openapi.json` → `web/src/lib/api/schema.d.ts`. Run after any route/schema change; CI fails if it is stale |
+
+Per-package: `cd api && uv run …`, `cd web && pnpm …`.
 
 ## Hard rules — never break these
 
