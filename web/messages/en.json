@@ -161,7 +161,15 @@
       "editExample": "Edit example",
       "empty": "No examples yet",
       "shape": "Shape",
-      "publicCount": "{n} of {total} public"
+      "publicCount": "{n} of {total} public",
+      "emptyBody": "Start with questions friends often ask you, and answer the way you really type. The more natural, the more it sounds like you.",
+      "addFirst": "Write your first example",
+      "makePublic": "Make public",
+      "makePrivate": "Make private",
+      "deleteTitle": "Delete this example?",
+      "deleteBody": "This cannot be undone. Compile again after deleting.",
+      "questionPlaceholder": "e.g. React or Vue — which should I pick?",
+      "answerPlaceholder": "Answer the way you really would: same language, endings and formatting"
     },
     "newVersionNotice": "This persona is published. Edits create a new draft version; the shared link keeps using the published version until you publish again.",
     "compile": {
@@ -180,7 +188,10 @@
       "vocabulary": "Vocabulary",
       "avoid": "Avoids",
       "conflicts": "Settings vs examples conflicts",
-      "fixedExamples": "{n} fixed examples"
+      "fixedExamples": "{n} fixed examples",
+      "short": "Run it after every edit",
+      "noExamples": "Add an example first to compile",
+      "upToDate": "This version is already live. Edit something before compiling again"
     },
     "test": {
       "hint": "Testing as the owner: all examples are used, including private ones (visitors only get public ones)",
@@ -199,7 +210,74 @@
       "copy": "Copy",
       "copied": "Copied",
       "open": "Open",
-      "live": "Live: version {v} · {visibility}"
+      "live": "Live: version {v} · {visibility}",
+      "checklistTitle": "Needed before publishing",
+      "ready": "Compiled",
+      "publicOk": "{n} public examples",
+      "liveTitle": "Your persona is live",
+      "liveBody": "Send this link to your friends",
+      "shareLine": "Share on LINE",
+      "shareX": "Share on X",
+      "shareText": "Try chatting with the AI version of {name}",
+      "unpublishTitle": "Unpublish?",
+      "unpublishBody": "Links you shared will stop working until you publish again."
+    },
+    "createSubtitle": "Start with a name. You can change everything else later.",
+    "avatarHint": "Your avatar is made from the first letter of the name",
+    "visitorsSee": "Visitors will see “{label}”",
+    "slugInvalid": "Use a-z, 0-9 and -, up to 40 characters, not starting or ending with -",
+    "createAndContinue": "Create and add examples",
+    "after": {
+      "title": "What happens next",
+      "name": {
+        "title": "Name it",
+        "body": "This page"
+      },
+      "examples": {
+        "title": "Add example answers",
+        "body": "At least 3 public ones"
+      },
+      "test": {
+        "title": "Compile and test",
+        "body": "Chat with your own AI first"
+      },
+      "publish": {
+        "title": "Publish and share",
+        "body": "Unpublish any time"
+      }
+    },
+    "checklist": {
+      "title": "Before you publish",
+      "titleDone": "Ready to share",
+      "progress": "{done} of {total} done",
+      "basics": "Name and description",
+      "basicsTodo": "Add a short description so visitors know what you answer",
+      "examples": "Add 3 example answers",
+      "examplesTodo": "{n} so far · {left} to go",
+      "public": "3 public examples",
+      "publicTodo": "{n} so far · make {left} more public",
+      "compile": "Compile and test",
+      "compileTodo": "Press Compile above, then try it in the Test tab",
+      "publish": "Publish and share the link",
+      "publishTodo": "Pick a visibility and press Publish",
+      "goTo": "Go to this step"
+    },
+    "header": {
+      "openPublic": "Open public page",
+      "liveVersion": "Version {n} is live"
+    },
+    "settingsTab": {
+      "basics": "Basics",
+      "basicsHint": "Name, link and description visitors see",
+      "style": "Answer style",
+      "styleHint": "The AI uses this to set tone and format",
+      "rulesHint": "Rules the AI must always follow",
+      "unsaved": "You have unsaved changes",
+      "allSaved": "All changes saved"
+    },
+    "styleCardTab": {
+      "emptyTitle": "No style card yet",
+      "emptyBody": "When you compile, your examples are read and your answer style is summarised here."
     }
   },
   "health": {
@@ -212,13 +290,29 @@
     "sending": "Answering…",
     "newChat": "New chat",
     "empty": "No messages yet — ask something",
-    "networkError": "Could not connect. Please try again."
+    "networkError": "Could not connect. Please try again.",
+    "emptyTitle": "Ask {name} anything",
+    "emptyBody": "Try one of these to start",
+    "starters": {
+      "intro": "Tell me about yourself",
+      "strengths": "What are you good at?",
+      "favorite": "Tell me about something you love"
+    },
+    "typing": "{name} is typing…",
+    "keyHint": "Enter to send · Shift+Enter for a new line",
+    "placeholderShort": "Type a question…",
+    "messages": "Conversation",
+    "you": "You"
   },
   "public": {
     "label": "AI version of {name}",
     "disclaimer": "This is an AI imitating an answering style, not the real person. It can be wrong and does not know their personal life.",
     "ownerCanRead": "The persona owner can read this conversation",
-    "ownerCannotRead": "The persona owner only sees aggregate stats, not your messages"
+    "ownerCannotRead": "The persona owner only sees aggregate stats, not your messages",
+    "createOwn": "Create your own",
+    "ctaTitle": "Want an AI that answers like you?",
+    "ctaLink": "Create your own persona",
+    "notReal": "An AI imitating an answering style, not the real person. It can be wrong."
   },
   "report": {
     "button": "Report",
@@ -299,7 +393,8 @@
         "title": "Changes",
         "body": "We may update these terms; the date above shows the latest version. Continued use means you accept the updated terms."
       }
-    }
+    },
+    "contents": "Contents"
   },
   "theme": {
     "toggle": "Toggle light / dark theme"
@@ -348,5 +443,15 @@
   "notFound": {
     "title": "Page not found",
     "body": "The link may be mistyped, or its owner has unpublished it."
+  },
+  "shape": {
+    "comparison": "Comparison",
+    "how_to": "How-to",
+    "definition": "Definition",
+    "troubleshooting": "Troubleshooting",
+    "opinion": "Opinion",
+    "recommendation": "Recommendation",
+    "casual": "Casual",
+    "other": "Other"
   }
 }

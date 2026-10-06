@@ -15,10 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { errorMessage, type PersonaListItem } from "@/lib/api/client";
 import { useApi } from "@/lib/api/use-api";
+import { MIN_PUBLIC_EXAMPLES } from "@/lib/persona-progress";
 import { shareUrl } from "@/lib/share";
-
-/** Publishing needs 3 public examples, so 3 examples is the first milestone. */
-const MIN_EXAMPLES = 3;
 
 function isLive(p: PersonaListItem): boolean {
   return p.published_version_id !== null && p.visibility !== "private";
@@ -27,8 +25,8 @@ function isLive(p: PersonaListItem): boolean {
 /** The one thing the creator should do next, or null when the persona is live. */
 function nextStep(p: PersonaListItem, t: ReturnType<typeof useTranslations>): string | null {
   if (isLive(p)) return null;
-  if (p.example_count < MIN_EXAMPLES) {
-    return t("studio.next.examples", { n: MIN_EXAMPLES - p.example_count });
+  if (p.example_count < MIN_PUBLIC_EXAMPLES) {
+    return t("studio.next.examples", { n: MIN_PUBLIC_EXAMPLES - p.example_count });
   }
   if (p.status === "compiling") return t("studio.next.compiling");
   if (p.status === "failed") return t("studio.next.failed");
@@ -151,7 +149,7 @@ function PersonaList() {
 
   if (!items) {
     return (
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
         {[0, 1, 2].map((i) => (
           <Skeleton key={i} className="h-56 rounded-2xl" />
         ))}
@@ -181,7 +179,7 @@ function PersonaList() {
       <p className="-mt-4 text-muted-foreground">
         {t("studio.subtitle", { count: items.length, live })}
       </p>
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p) => (
           <PersonaCard key={p.id} p={p} />
         ))}

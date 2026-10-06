@@ -1,5 +1,6 @@
 "use client";
 
+import { Flag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -51,11 +52,18 @@ export function ReportDialog({ slug }: { slug: string }) {
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        {t("button")}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-muted-foreground max-sm:size-9 max-sm:px-0"
+        onClick={() => setOpen(true)}
+        aria-label={t("button")}
+      >
+        <Flag data-icon="inline-start" aria-hidden="true" />
+        <span className="max-sm:sr-only">{t("button")}</span>
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl p-6">
           <form onSubmit={submit} className="flex flex-col gap-4">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
