@@ -112,6 +112,7 @@ Per-package: `cd api && uv run …`, `cd web && pnpm …`.
 
 - `docs/PRODUCT.md` — what we are building, modes, privacy, safeguards, non-goals
 - `docs/ARCHITECTURE.md` — components, flows, context strategies, routing, caching, scaling
+- `docs/FLOWS.md` — diagrams of the app as built: user flow, architecture, compile + chat sequences, data model, step → file map
 - `docs/PROMPTS.md` — compiler, classifier, runtime, rewrite, and judge prompts
 - `docs/ROADMAP.md` — milestones with tasks and acceptance criteria, Lean MVP scope, launch checkpoint
 - `docs/LORA_EXPERIMENT.md` — X1 design, data rules, file formats, decision rule (only for X1 work)
