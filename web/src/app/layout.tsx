@@ -36,11 +36,14 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getLocale();
   return (
-    // next-themes sets the theme class on <html> before hydration.
-    <html lang={locale} suppressHydrationWarning>
-      <body
-        className={`${fontSans.variable} ${fontMono.variable} flex min-h-dvh flex-col antialiased`}
-      >
+    // next-themes sets the theme class on <html> before hydration. Font variables live on <html>
+    // too, because `html { font-family: var(--font-sans) }` must be able to see them.
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={`${fontSans.variable} ${fontMono.variable}`}
+    >
+      <body className="flex min-h-dvh flex-col antialiased">
         <ThemeProvider>
           <NextIntlClientProvider>
             <AuthProvider>
