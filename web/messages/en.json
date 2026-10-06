@@ -280,5 +280,8 @@
         "body": "We may update these terms; the date above shows the latest version. Continued use means you accept the updated terms."
       }
     }
+  },
+  "theme": {
+    "toggle": "Toggle light / dark theme"
   }
 }
