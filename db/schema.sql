@@ -35,7 +35,7 @@ CREATE TABLE persona_versions (
                         CHECK (status IN ('draft','compiling','ready','failed')),
     display_name        text NOT NULL,
     description         text,
-    settings            jsonb NOT NULL DEFAULT '{}',    -- language, tone, length, level, style...
+    settings            jsonb NOT NULL DEFAULT '{}',    -- language, tone, length, level, style, profile{}, vocabulary{}
     rules               text NOT NULL DEFAULT '',
     mode                text NOT NULL DEFAULT 'simple' CHECK (mode IN ('simple','like_me')),
     style_card          jsonb,                          -- output of prompts/compiler.md

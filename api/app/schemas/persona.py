@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 Language = Literal["th", "en", "mixed"]
 AnswerLength = Literal["short", "medium", "long"]
@@ -23,6 +23,30 @@ Shape = Literal[
 
 SLUG_PATTERN = r"^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?$"
 
+# Limits for the key→value maps (`profile`, `vocabulary`) so the runtime prompt stays short.
+KV_MAX_ENTRIES = 30
+KV_MAX_KEY = 40
+KV_MAX_VALUE = 200
+
+
+def validate_kv_map(items: dict[str, str]) -> dict[str, str]:
+    """Strip keys/values; empty keys, duplicates, and over-limit sizes are errors, not dropped."""
+    cleaned: dict[str, str] = {}
+    for raw_key, raw_value in items.items():
+        key, value = raw_key.strip(), raw_value.strip()
+        if not key:
+            raise ValueError("keys must not be empty")
+        if len(key) > KV_MAX_KEY:
+            raise ValueError(f"key '{key[:20]}…' is longer than {KV_MAX_KEY} characters")
+        if len(value) > KV_MAX_VALUE:
+            raise ValueError(f"value for '{key}' is longer than {KV_MAX_VALUE} characters")
+        if key in cleaned:
+            raise ValueError(f"duplicate key '{key}'")
+        cleaned[key] = value
+    if len(cleaned) > KV_MAX_ENTRIES:
+        raise ValueError(f"at most {KV_MAX_ENTRIES} entries are allowed")
+    return cleaned
+
 
 class PersonaSettings(BaseModel):
     """Stored as `persona_versions.settings` (jsonb). Free-text fields may be Thai or English."""
@@ -36,6 +60,15 @@ class PersonaSettings(BaseModel):
     personality: str = Field(default="", max_length=500)
     writing_style: str = Field(default="", max_length=500)
     formatting: list[str] = Field(default_factory=list, max_length=20)
+    # ข้อมูลพื้นฐาน — facts about the person (อายุ, ราศี, สีที่ชอบ …). Runtime prompt only.
+    profile: dict[str, str] = Field(default_factory=dict)
+    # คำที่ใช้บ่อย / slang — word → meaning + when it is used. Runtime and compiler.
+    vocabulary: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("profile", "vocabulary")
+    @classmethod
+    def _check_kv(cls, value: dict[str, str]) -> dict[str, str]:
+        return validate_kv_map(value)
 
 
 class PersonaCreate(BaseModel):

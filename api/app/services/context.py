@@ -8,7 +8,7 @@ from typing import Protocol
 
 from app.llm.providers import Message
 from app.models import Example, PersonaVersion
-from app.prompts.loader import load_prompt, render_examples
+from app.prompts.loader import load_prompt, render_examples, render_kv
 
 
 def visible_examples(version: PersonaVersion, *, allow_private: bool) -> list[Example]:
@@ -46,6 +46,8 @@ class SimpleStrategy:
             display_name=version.display_name,
             style_card_json=json.dumps(version.style_card or {}, ensure_ascii=False, indent=1),
             rules=version.rules or "(none)",
+            profile=render_kv(version.settings.get("profile") or {}),
+            vocabulary=render_kv(version.settings.get("vocabulary") or {}),
             fixed_examples=render_examples([(e.question, e.answer, e.shape) for e in examples]),
             dynamic_examples="",
             knowledge="",

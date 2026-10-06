@@ -60,3 +60,10 @@ def render_examples(
             f"<answer>{escape(answer)}</answer></example>"
         )
     return "\n".join(lines)
+
+
+def render_kv(items: dict[str, str]) -> str:
+    """Render a key→value map (profile facts, vocabulary) as one `- key: value` line each."""
+    if not items:
+        return "(none)"
+    return "\n".join(f"- {escape(key)}: {escape(value)}" for key, value in items.items())

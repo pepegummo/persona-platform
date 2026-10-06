@@ -101,6 +101,32 @@
       "modeSimple": "Simple — fast and cheap",
       "modeLikeMe": "Like Me — coming soon"
     },
+    "profile": {
+      "title": "Basic info",
+      "hint": "Facts the AI may answer with when asked (age, zodiac, favorites…). Not shown on the public page.",
+      "keyPlaceholder": "e.g. Zodiac",
+      "valuePlaceholder": "e.g. Virgo",
+      "suggestions": {
+        "age": "Age",
+        "zodiac": "Zodiac",
+        "color": "Favorite color",
+        "game": "Favorite game",
+        "book": "Favorite book",
+        "music": "Favorite music"
+      }
+    },
+    "vocabulary": {
+      "title": "Words I use often / slang",
+      "hint": "Word → what it means and when you use it, so the AI uses it the same way.",
+      "keyPlaceholder": "e.g. ปัง",
+      "valuePlaceholder": "meaning + when you use it, e.g. great; when praising something"
+    },
+    "kv": {
+      "add": "Add",
+      "remove": "Remove",
+      "counter": "{n} / {max}",
+      "duplicate": "Duplicate keys — keep one of each"
+    },
     "examplesTab": {
       "title": "Question → answer examples",
       "hint": "The more real examples, the more the persona sounds like you. Aim for at least 5; at least 3 public examples are needed to publish.",

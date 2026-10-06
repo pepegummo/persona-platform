@@ -8,12 +8,25 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
-from app.llm.providers import FakeProvider
+from app.llm.providers import Completion, FakeProvider, Message
 from app.llm.router import LLMRouter
 from app.models import Example, LLMCall, Persona, PersonaVersion, User
 from app.schemas.style_card import StyleCard
 from app.services.compile import Compiler, choose_fixed_examples, choose_held_out
 from tests.llm_stubs import MemoryRedis
+
+
+class RecordingFakeProvider(FakeProvider):
+    """FakeProvider that also keeps every system prompt it was given."""
+
+    def __init__(self, embedding_dim: int = 1024) -> None:
+        super().__init__(embedding_dim)
+        self.system_prompts: list[str] = []
+
+    async def complete(self, *, messages: list[Message], **kw: object) -> Completion:
+        self.system_prompts.extend(m["content"] for m in messages if m["role"] == "system")
+        return await super().complete(messages=messages, **kw)  # type: ignore[arg-type]
+
 
 KAFKA_Q = "Kafka กับ MQTT ต่างกันยังไงครับ"
 KAFKA_A = (
@@ -86,6 +99,28 @@ async def test_compile_kafka_example_produces_style_card(
     logged = await db.scalars(select(LLMCall).where(LLMCall.persona_version_id == version.id))
     tasks = sorted({c.task for c in logged})
     assert tasks == ["compile", "embed", "shape_classify"]
+
+
+async def test_compile_keeps_profile_out_of_compiler_input(
+    db: AsyncSession, app: FastAPI, fake_settings: Settings
+) -> None:
+    version = await make_persona(db, n_examples=1)
+    version.settings = {
+        **version.settings,
+        "profile": {"ราศี": "กันย์"},
+        "vocabulary": {"ปัง": "ดีมาก"},
+    }
+    await db.commit()
+    provider = RecordingFakeProvider(1024)
+    router = LLMRouter(fake_settings, app.state.test_session_factory, provider=provider)
+    compiler = Compiler(db, router, MemoryRedis(), fake_settings)  # type: ignore[arg-type]
+
+    await compiler.run(version.id)
+
+    compile_prompts = [p for p in provider.system_prompts if "<settings>" in p]
+    assert len(compile_prompts) == 1
+    assert "กันย์" not in compile_prompts[0] and "profile" not in compile_prompts[0]
+    assert '"vocabulary": {"ปัง": "ดีมาก"}' in compile_prompts[0]
 
 
 async def test_compile_tags_every_example_and_holds_out(

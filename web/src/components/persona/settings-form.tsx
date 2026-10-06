@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { NativeSelect } from "@/components/native-select";
+import { KeyValueEditor } from "@/components/persona/key-value-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ const FORMATTING = ["bullets", "comparisons", "analogies", "headings", "code_blo
 const LANGUAGES = ["th", "en", "mixed"] as const;
 const LENGTHS = ["short", "medium", "long"] as const;
 const LEVELS = ["beginner", "intermediate", "expert"] as const;
+const PROFILE_SUGGESTIONS = ["age", "zodiac", "color", "game", "book", "music"] as const;
 
 type Props = {
   persona: Persona;
@@ -39,6 +41,9 @@ export function SettingsForm({ persona, busy, onSave }: Props) {
     personality: draft.settings.personality ?? "",
     writing_style: draft.settings.writing_style ?? "",
     formatting: draft.settings.formatting ?? [],
+    // The API replaces the whole settings object, so carry these through even when untouched.
+    profile: draft.settings.profile ?? {},
+    vocabulary: draft.settings.vocabulary ?? {},
   });
 
   function patch<K extends keyof PersonaSettings>(key: K, value: PersonaSettings[K]) {
@@ -97,6 +102,37 @@ export function SettingsForm({ persona, busy, onSave }: Props) {
             maxLength={1000}
           />
         </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Label htmlFor="profile-add" className="text-lg font-medium">
+          {tp("profile.title")}
+        </Label>
+        <p className="text-xs text-muted-foreground">{tp("profile.hint")}</p>
+        <KeyValueEditor
+          id="profile-add"
+          value={settings.profile ?? {}}
+          onChange={(next) => patch("profile", next)}
+          keyPlaceholder={tp("profile.keyPlaceholder")}
+          valuePlaceholder={tp("profile.valuePlaceholder")}
+          suggestions={PROFILE_SUGGESTIONS.map((k) => tp(`profile.suggestions.${k}`))}
+          disabled={busy}
+        />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Label htmlFor="vocabulary-add" className="text-lg font-medium">
+          {tp("vocabulary.title")}
+        </Label>
+        <p className="text-xs text-muted-foreground">{tp("vocabulary.hint")}</p>
+        <KeyValueEditor
+          id="vocabulary-add"
+          value={settings.vocabulary ?? {}}
+          onChange={(next) => patch("vocabulary", next)}
+          keyPlaceholder={tp("vocabulary.keyPlaceholder")}
+          valuePlaceholder={tp("vocabulary.valuePlaceholder")}
+          disabled={busy}
+        />
       </section>
 
       <h2 className="text-lg font-medium">{t("title")}</h2>

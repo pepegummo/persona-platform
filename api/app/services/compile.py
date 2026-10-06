@@ -178,8 +178,10 @@ class Compiler:
         self, ctx: CallContext, version: PersonaVersion, training: list[Example]
     ) -> StyleCard:
         prompt = load_prompt("compiler")
+        # Profile facts describe the person, not their writing; keep them out of the style card.
+        style_settings = {k: v for k, v in version.settings.items() if k != "profile"}
         rendered = prompt.render(
-            settings_json=json.dumps(version.settings, ensure_ascii=False),
+            settings_json=json.dumps(style_settings, ensure_ascii=False),
             rules=version.rules,
             examples=render_examples(
                 [(e.question, e.answer, e.shape) for e in training],

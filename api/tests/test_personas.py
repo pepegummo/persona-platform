@@ -219,3 +219,57 @@ async def test_validation(client: AsyncClient, db: AsyncSession) -> None:
         headers=auth(),
     )
     assert r.status_code == 422
+
+
+PROFILE = {"ราศี": "กันย์", "อายุ": "25", "เกมที่ชอบ": "Valorant"}
+VOCAB = {"ปัง": "ดีมาก ใช้เวลาชมอะไร", "จึ้ง": "สุดยอด ใช้กับของที่ชอบมาก ๆ"}
+
+
+async def test_profile_and_vocabulary_round_trip(client: AsyncClient, db: AsyncSession) -> None:
+    persona = await create(client)
+    pid = persona["id"]
+    assert persona["draft"]["settings"]["profile"] == {}
+    assert persona["draft"]["settings"]["vocabulary"] == {}
+
+    settings = {**persona["draft"]["settings"], "profile": PROFILE, "vocabulary": VOCAB}
+    r = await client.patch(f"/api/personas/{pid}", json={"settings": settings}, headers=auth())
+    assert r.status_code == 200, r.text
+    got = r.json()["draft"]["settings"]
+    assert got["profile"] == PROFILE and got["vocabulary"] == VOCAB
+    assert list(got["profile"]) == list(PROFILE)  # order preserved for the editor
+
+    r = await client.get(f"/api/personas/{pid}", headers=auth())
+    assert r.json()["draft"]["settings"]["profile"] == PROFILE
+
+    # Editing a published version clones the maps into the new draft.
+    await publish(db, pid)
+    r = await client.patch(f"/api/personas/{pid}", json={"rules": "x"}, headers=auth())
+    draft = r.json()["draft"]
+    assert draft["version_number"] == 2
+    assert draft["settings"]["profile"] == PROFILE and draft["settings"]["vocabulary"] == VOCAB
+
+
+async def test_profile_map_limits(client: AsyncClient, db: AsyncSession) -> None:
+    persona = await create(client)
+    pid = persona["id"]
+
+    async def patch(profile: dict[str, str]) -> int:
+        r = await client.patch(
+            f"/api/personas/{pid}", json={"settings": {"profile": profile}}, headers=auth()
+        )
+        return r.status_code
+
+    assert await patch({f"k{i}": "v" for i in range(30)}) == 200
+    assert await patch({f"k{i}": "v" for i in range(31)}) == 422
+    assert await patch({"ก" * 40: "v"}) == 200
+    assert await patch({"ก" * 41: "v"}) == 422
+    assert await patch({"k": "ข" * 200}) == 200
+    assert await patch({"k": "ข" * 201}) == 422
+    assert await patch({"   ": "v"}) == 422
+    assert await patch({"ราศี": "กันย์", " ราศี ": "x"}) == 422  # duplicate after strip
+
+    # Whitespace is trimmed on the way in.
+    r = await client.patch(
+        f"/api/personas/{pid}", json={"settings": {"profile": {" ราศี ": " กันย์ "}}}, headers=auth()
+    )
+    assert r.json()["draft"]["settings"]["profile"] == {"ราศี": "กันย์"}

@@ -512,6 +512,14 @@ export interface components {
             writing_style?: string;
             /** Formatting */
             formatting?: string[];
+            /** Profile */
+            profile?: {
+                [key: string]: string;
+            };
+            /** Vocabulary */
+            vocabulary?: {
+                [key: string]: string;
+            };
         };
         /**
          * PersonaUpdate

@@ -1390,6 +1390,20 @@
             "type": "array",
             "maxItems": 20,
             "title": "Formatting"
+          },
+          "profile": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Profile"
+          },
+          "vocabulary": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Vocabulary"
           }
         },
         "additionalProperties": false,

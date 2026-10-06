@@ -213,6 +213,31 @@ async def test_simple_strategy_prompt_shape(db: AsyncSession, client: AsyncClien
     assert PRIVATE_ANSWER not in messages[0]["content"]
 
 
+async def test_simple_strategy_renders_profile_and_vocabulary(
+    db: AsyncSession, client: AsyncClient
+) -> None:
+    persona = await seed_persona(client, db, public=1, private=0)
+    await client.patch(
+        f"/api/personas/{persona['id']}",
+        json={
+            "settings": {
+                "profile": {"ราศี": "กันย์", "เกมที่ชอบ": "Valorant"},
+                "vocabulary": {"ปัง": "ดีมาก ใช้เวลาชมอะไร"},
+            }
+        },
+        headers=auth(),
+    )
+    version = await mark_ready(db, persona["id"])
+    system = SimpleStrategy().system_prompt(version, is_owner=False)
+    assert "- ราศี: กันย์" in system and "- เกมที่ชอบ: Valorant" in system
+    assert "- ปัง: ดีมาก ใช้เวลาชมอะไร" in system
+
+    # Empty maps render as "(none)" rather than a missing variable.
+    version.settings = {}
+    system = SimpleStrategy().system_prompt(version, is_owner=False)
+    assert "<profile>" in system and "(none)" in system
+
+
 async def test_owner_test_chat_requires_ready(
     client: AsyncClient, db: AsyncSession, chat_app: FastAPI
 ) -> None:

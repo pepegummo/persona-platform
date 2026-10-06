@@ -25,6 +25,10 @@ Weaker fit: "be me in casual chat with my friends" — allowed, positioned as fu
 - Name, slug, display name, description, avatar
 - Settings: language (th / en / mixed), tone, answer length, technical level, personality,
   writing style, formatting preferences (bullets, comparisons, analogies)
+- Profile facts (optional key → value, e.g. อายุ, ราศี, สีที่ชอบ, เกมที่ชอบ): the AI answers from
+  them when asked; never shown on the public page, never used to build the style card
+- Vocabulary / slang (optional key → value: word → meaning + when it is used) so the AI uses the
+  creator's own words correctly
 - Custom rules (free text, e.g. "always end with สรุป:")
 - Examples: Question → Answer pairs, each marked private or public
 - Knowledge documents (optional, later milestone)
