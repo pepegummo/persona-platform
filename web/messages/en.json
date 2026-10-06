@@ -25,7 +25,13 @@
     "saved": "Saved",
     "confirmDelete": "Delete this item?",
     "back": "Back",
-    "optional": "optional"
+    "optional": "optional",
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "copyFailed": "Could not copy. Select the text and copy it yourself",
+    "backToStudio": "My personas",
+    "goHome": "Back to home",
+    "moreOptions": "More options"
   },
   "status": {
     "draft": "Draft",
@@ -45,7 +51,21 @@
     "empty": "No personas yet — create your first one",
     "new": "New persona",
     "examples": "{count, plural, =0 {No examples} =1 {1 example} other {# examples}}",
-    "open": "Open"
+    "open": "Open",
+    "subtitle": "{count, plural, =0 {No personas yet} one {# persona} other {# personas}} · {live} live",
+    "emptyTitle": "No personas yet",
+    "emptyBody": "Build an AI that answers in your style in a few minutes, then share the link with friends.",
+    "edit": "Edit",
+    "continue": "Continue",
+    "loadFailed": "Could not load your personas",
+    "retry": "Try again",
+    "next": {
+      "examples": "Next: add {n, plural, one {# more example} other {# more examples}}",
+      "compile": "Next: run compile",
+      "compiling": "Compiling, hang on",
+      "failed": "Compile failed, try again",
+      "publish": "Next: publish and share the link"
+    }
   },
   "persona": {
     "createTitle": "Create a persona",
@@ -283,5 +303,50 @@
   },
   "theme": {
     "toggle": "Toggle light / dark theme"
+  },
+  "home": {
+    "badge": "An AI that answers in your style",
+    "title": "Let friends ask you anything, even when you are busy",
+    "subtitle": "Build an AI persona from your real answers. Set its tone, language and style, then share a link so friends can chat with it.",
+    "ctaCreate": "Create your persona",
+    "ctaHow": "See how it works",
+    "note": "No code needed · Examples you mark private are never used to answer others",
+    "preview": {
+      "label": "Chat preview",
+      "name": "Mew",
+      "role": "Frontend dev · explains with comparisons",
+      "question": "React or Vue — which is better for a beginner?",
+      "answer": "If you are just starting, think of it like this:\n• Vue = a set menu, everything included, quick to start\n• React = an empty kitchen, lots of freedom, more choices to make\nSummary: want fast results, pick Vue; want more job options, pick React"
+    },
+    "steps": {
+      "title": "Three steps, a few minutes",
+      "subtitle": "The more real answers you add, the more it sounds like you",
+      "label": "Step {n}",
+      "settings": {
+        "title": "Set up your voice",
+        "body": "Pick language, tone, answer length and the words you use a lot"
+      },
+      "examples": {
+        "title": "Add example answers",
+        "body": "Question → answer in your own words. Choose which ones stay private"
+      },
+      "share": {
+        "title": "Share the link",
+        "body": "Send the link to friends. Anyone with it can chat with your AI"
+      }
+    },
+    "privacy": {
+      "title": "Privacy first",
+      "body": "Private examples are only used when you test it yourself. Every chat page clearly says it is an AI, not the real person, and you can unpublish at any time.",
+      "link": "Read the privacy policy"
+    },
+    "final": {
+      "title": "Ready to build your own AI?",
+      "cta": "Get started"
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The link may be mistyped, or its owner has unpublished it."
   }
 }

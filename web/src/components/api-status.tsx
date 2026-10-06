@@ -41,8 +41,8 @@ export function ApiStatus() {
   }
 
   return (
-    <div className="flex flex-col items-start gap-3 rounded-lg border p-4">
-      <p className="text-sm text-muted-foreground">{t("label")}</p>
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed px-4 py-2 text-sm">
+      <p className="text-muted-foreground">{t("label")}</p>
       <p className="font-mono" data-testid="api-status">
         {state.kind === "loading" && "…"}
         {state.kind === "ok" && "ok"}
@@ -50,7 +50,7 @@ export function ApiStatus() {
           `degraded (db: ${state.health.db}, redis: ${state.health.redis})`}
         {state.kind === "unreachable" && "unreachable"}
       </p>
-      <Button variant="outline" size="sm" onClick={() => void refresh()}>
+      <Button variant="ghost" size="sm" onClick={() => void refresh()}>
         {t("refresh")}
       </Button>
     </div>

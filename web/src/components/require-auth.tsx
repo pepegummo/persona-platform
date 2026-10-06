@@ -1,8 +1,10 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
+import { LogIn } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthState } from "@/lib/auth/context";
@@ -11,17 +13,20 @@ import { useAuthState } from "@/lib/auth/context";
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const t = useTranslations("auth");
   const auth = useAuthState();
-  if (!auth.isLoaded) return <Skeleton className="h-24 w-full" />;
+  if (!auth.isLoaded) return <Skeleton className="h-40 w-full rounded-2xl" />;
   if (!auth.isSignedIn) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-lg border p-6">
-        <p>{t("signInRequired")}</p>
-        {auth.mode === "clerk" && (
-          <SignInButton mode="modal">
-            <Button>{t("signIn")}</Button>
-          </SignInButton>
-        )}
-      </div>
+      <EmptyState
+        icon={LogIn}
+        title={t("signInRequired")}
+        action={
+          auth.mode === "clerk" && (
+            <SignInButton mode="modal">
+              <Button size="lg">{t("signIn")}</Button>
+            </SignInButton>
+          )
+        }
+      />
     );
   }
   return <>{children}</>;
