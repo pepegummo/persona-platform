@@ -1,6 +1,6 @@
 """Scripted provider + in-memory Redis for LLM tests. No network."""
 
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass, field
 
 from app.llm.providers import Completion, Message, ProviderError, StreamEnd, Usage
@@ -50,7 +50,7 @@ class ScriptedProvider:
         timeout_s: float,
         max_tokens: int,
         api_key: str | None,
-    ) -> AsyncIterator[str | StreamEnd]:
+    ) -> AsyncGenerator[str | StreamEnd, None]:
         completion = self._next(model, messages)
         for i in range(0, len(completion.text), 5):
             yield completion.text[i : i + 5]
@@ -61,6 +61,12 @@ class ScriptedProvider:
     ) -> tuple[list[list[float]], Usage]:
         self.calls.append(Call(model, [{"role": "user", "content": t} for t in texts]))
         return [[0.1] * 4 for _ in texts], Usage(input_tokens=len(texts))
+
+    def estimate_usage(self, *, model: str, messages: list[Message], text: str) -> Usage:
+        return Usage(input_tokens=10, output_tokens=len(text), cost_usd=ESTIMATED_COST)
+
+
+ESTIMATED_COST = 0.0005  # what ScriptedProvider.estimate_usage charges
 
 
 def ok(text: str, cost: float = 0.001) -> Completion:
@@ -76,7 +82,12 @@ def timeout() -> ProviderError:
 
 
 def bad_request() -> ProviderError:
-    return ProviderError("BadRequestError: 400", retryable=False, status=400)
+    return ProviderError("BadRequestError: 400", retryable=False, status=400, fallback=False)
+
+
+def not_found() -> ProviderError:
+    """A retired model: not worth retrying, but the fallback model may still work."""
+    return ProviderError("NotFoundError: model_not_found", retryable=False, status=404)
 
 
 class MemoryRedis:

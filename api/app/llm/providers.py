@@ -7,22 +7,39 @@ outside `app/llm` may import LiteLLM.
 
 import hashlib
 import json
+import logging
 import math
 import re
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from typing import Any, Protocol
+
+log = logging.getLogger(__name__)
 
 Message = dict[str, str]  # {"role": "system" | "user" | "assistant", "content": str}
 
 
 class ProviderError(Exception):
-    """Normalized provider failure. `retryable` drives retry + fallback in the router."""
+    """Normalized provider failure.
 
-    def __init__(self, message: str, *, retryable: bool, status: int | None = None) -> None:
+    `retryable`: worth retrying the same model (429, 5xx, timeout).
+    `fallback`: worth trying the fallback model. False only when the request itself is bad
+    (400-family), which another model would reject too; a retired model, bad key, or outage on
+    one provider should still reach the fallback.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        retryable: bool,
+        status: int | None = None,
+        fallback: bool = True,
+    ) -> None:
         super().__init__(message)
         self.retryable = retryable
         self.status = status
+        self.fallback = fallback
 
 
 @dataclass
@@ -66,11 +83,77 @@ class Provider(Protocol):
         timeout_s: float,
         max_tokens: int,
         api_key: str | None,
-    ) -> AsyncIterator[str | StreamEnd]: ...
+    ) -> AsyncGenerator[str | StreamEnd, None]: ...
 
     async def embed(
         self, *, model: str, texts: list[str], timeout_s: float, api_key: str | None
     ) -> tuple[list[list[float]], Usage]: ...
+
+    def estimate_usage(self, *, model: str, messages: list[Message], text: str) -> Usage:
+        """Best-effort usage for a stream that was closed before the provider reported it."""
+        ...
+
+
+# --- Reasoning text --------------------------------------------------------------------------
+
+_THINK_OPEN, _THINK_CLOSE = "<think>", "</think>"
+_THINK_RE = re.compile(r"<think>.*?(?:</think>\s*|\Z)", re.S)
+
+
+def strip_think(text: str) -> str:
+    """Drop `<think>…</think>` reasoning (and an unclosed trailing `<think>…`)."""
+    return _THINK_RE.sub("", text)
+
+
+def _partial_suffix(text: str, tag: str) -> int:
+    """Length of the longest suffix of `text` that is a proper prefix of `tag`."""
+    for k in range(min(len(tag) - 1, len(text)), 0, -1):
+        if text.endswith(tag[:k]):
+            return k
+    return 0
+
+
+class ThinkStripper:
+    """Streaming `strip_think`: tags may be split across deltas, so a possible partial tag is
+    held back until the next delta decides it."""
+
+    def __init__(self) -> None:
+        self._buf = ""
+        self._inside = False
+        self._trim = False  # drop whitespace right after a closing tag
+
+    def feed(self, delta: str) -> str:
+        self._buf += delta
+        out: list[str] = []
+        while self._buf:
+            if self._inside:
+                i = self._buf.find(_THINK_CLOSE)
+                if i == -1:
+                    self._buf = self._buf[-(len(_THINK_CLOSE) - 1) :]
+                    break
+                self._buf = self._buf[i + len(_THINK_CLOSE) :]
+                self._inside, self._trim = False, True
+                continue
+            if self._trim:
+                self._buf = self._buf.lstrip()
+                if not self._buf:
+                    break
+                self._trim = False
+            i = self._buf.find(_THINK_OPEN)
+            if i != -1:
+                out.append(self._buf[:i])
+                self._buf = self._buf[i + len(_THINK_OPEN) :]
+                self._inside = True
+                continue
+            keep = _partial_suffix(self._buf, _THINK_OPEN)
+            out.append(self._buf[: len(self._buf) - keep])
+            self._buf = self._buf[len(self._buf) - keep :]
+            break
+        return "".join(out)
+
+    def flush(self) -> str:
+        rest, self._buf = ("" if self._inside else self._buf), ""
+        return rest
 
 
 # --- LiteLLM ---------------------------------------------------------------------------------
@@ -83,6 +166,7 @@ class LiteLLMProvider:
         litellm.drop_params = True  # ignore params a given provider does not support
         litellm.suppress_debug_info = True
         self._litellm = litellm
+        self._no_price_warned: set[str] = set()
 
     def _wrap(self, e: Exception) -> ProviderError:
         ll = self._litellm
@@ -95,15 +179,47 @@ class LiteLLMProvider:
             | ll.InternalServerError,
         )
         status = getattr(e, "status_code", None)
-        return ProviderError(f"{type(e).__name__}: {e}", retryable=retryable, status=status)
+        # BadRequestError covers ContextWindowExceeded and ContentPolicyViolation too.
+        fallback = not isinstance(e, ll.BadRequestError)
+        return ProviderError(
+            f"{type(e).__name__}: {e}", retryable=retryable, status=status, fallback=fallback
+        )
 
-    def _usage(self, response: Any) -> Usage:
+    def _extra_params(self, model: str) -> dict[str, Any]:
+        """Groq reasoning models (e.g. Qwen3) put `<think>` text in the answer by default and
+        reject JSON mode without a reasoning format. Turn reasoning off; LiteLLM drops these as
+        unknown Groq params, so they go in `extra_body`."""
+        if model.split("/", 1)[0].lower() != "groq":
+            return {}
+        try:
+            reasoning = bool(self._litellm.supports_reasoning(model=model))
+        except Exception:
+            reasoning = False
+        if not reasoning:
+            return {}
+        return {"extra_body": {"reasoning_effort": "none", "reasoning_format": "hidden"}}
+
+    def _warn_no_price(self, model: str) -> None:
+        if model not in self._no_price_warned:
+            self._no_price_warned.add(model)
+            log.warning(
+                "llm: no LiteLLM price for %s; its calls are logged at $0 and do not count "
+                "toward the spend cap",
+                model,
+            )
+
+    def _usage(self, response: Any, model: str) -> Usage:
         u = getattr(response, "usage", None)
         details = getattr(u, "prompt_tokens_details", None)
         cached = getattr(details, "cached_tokens", None) or 0
+        # Pass the routed model: the response's own model name can lack the provider prefix
+        # (Groq returns "qwen/qwen3.8-27b"), and LiteLLM then cannot find a price.
         try:
-            cost = float(self._litellm.completion_cost(completion_response=response) or 0.0)
+            cost = float(
+                self._litellm.completion_cost(completion_response=response, model=model) or 0.0
+            )
         except Exception:
+            self._warn_no_price(model)
             cost = 0.0
         return Usage(
             input_tokens=int(getattr(u, "prompt_tokens", 0) or 0),
@@ -122,7 +238,7 @@ class LiteLLMProvider:
         api_key: str | None,
         json_mode: bool,
     ) -> Completion:
-        kwargs: dict[str, Any] = {}
+        kwargs: dict[str, Any] = self._extra_params(model)
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
         try:
@@ -136,8 +252,8 @@ class LiteLLMProvider:
             )
         except Exception as e:
             raise self._wrap(e) from e
-        text = response.choices[0].message.content or ""
-        return Completion(text=text, usage=self._usage(response))
+        text = strip_think(response.choices[0].message.content or "")
+        return Completion(text=text, usage=self._usage(response, model))
 
     async def stream(
         self,
@@ -147,7 +263,8 @@ class LiteLLMProvider:
         timeout_s: float,
         max_tokens: int,
         api_key: str | None,
-    ) -> AsyncIterator[str | StreamEnd]:
+    ) -> AsyncGenerator[str | StreamEnd, None]:
+        stripper = ThinkStripper()
         try:
             response = await self._litellm.acompletion(
                 model=model,
@@ -157,24 +274,45 @@ class LiteLLMProvider:
                 api_key=api_key or None,
                 stream=True,
                 stream_options={"include_usage": True},
+                **self._extra_params(model),
             )
             chunks: list[Any] = []
             async for chunk in response:
                 chunks.append(chunk)
                 delta = chunk.choices[0].delta.content if chunk.choices else None
-                if delta:
-                    yield delta
+                if delta and (visible := stripper.feed(delta)):
+                    yield visible
         except ProviderError:
             raise
         except Exception as e:
             raise self._wrap(e) from e
+        if tail := stripper.flush():
+            yield tail
         usage = Usage()
         try:
             full = self._litellm.stream_chunk_builder(chunks, messages=messages)
-            usage = self._usage(full)
+            usage = self._usage(full, model)
         except Exception:
             pass
         yield StreamEnd(usage=usage)
+
+    def estimate_usage(self, *, model: str, messages: list[Message], text: str) -> Usage:
+        ll = self._litellm
+        try:
+            input_tokens = int(ll.token_counter(model=model, messages=messages))
+            output_tokens = int(ll.token_counter(model=model, text=text)) if text else 0
+        except Exception:
+            input_tokens = sum(len(m["content"]) for m in messages) // 4
+            output_tokens = len(text) // 4
+        try:
+            prompt_cost, completion_cost = ll.cost_per_token(
+                model=model, prompt_tokens=input_tokens, completion_tokens=output_tokens
+            )
+            cost = float(prompt_cost + completion_cost)
+        except Exception:
+            self._warn_no_price(model)
+            cost = 0.0
+        return Usage(input_tokens=input_tokens, output_tokens=output_tokens, cost_usd=cost)
 
     async def embed(
         self, *, model: str, texts: list[str], timeout_s: float, api_key: str | None
@@ -188,8 +326,11 @@ class LiteLLMProvider:
         vectors = [list(map(float, item["embedding"])) for item in response.data]
         u = getattr(response, "usage", None)
         try:
-            cost = float(self._litellm.completion_cost(completion_response=response) or 0.0)
+            cost = float(
+                self._litellm.completion_cost(completion_response=response, model=model) or 0.0
+            )
         except Exception:
+            self._warn_no_price(model)
             cost = 0.0
         usage = Usage(input_tokens=int(getattr(u, "prompt_tokens", 0) or 0), cost_usd=cost)
         return vectors, usage
@@ -279,7 +420,7 @@ class FakeProvider:
         timeout_s: float,
         max_tokens: int,
         api_key: str | None,
-    ) -> AsyncIterator[str | StreamEnd]:
+    ) -> AsyncGenerator[str | StreamEnd, None]:
         text = self._answer(messages)
         for i in range(0, len(text), 12):
             yield text[i : i + 12]
@@ -290,6 +431,9 @@ class FakeProvider:
     ) -> tuple[list[list[float]], Usage]:
         vectors = [fake_embedding(t, self.embedding_dim) for t in texts]
         return vectors, Usage(input_tokens=sum(len(t) // 4 for t in texts), cost_usd=0.0)
+
+    def estimate_usage(self, *, model: str, messages: list[Message], text: str) -> Usage:
+        return _fake_usage(messages, text)
 
 
 def _fake_usage(messages: list[Message], text: str) -> Usage:

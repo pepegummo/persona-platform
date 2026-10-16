@@ -10,9 +10,25 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
-from app.llm.router import CallContext, LLMRouter, LLMUnavailable, SpendCapExceeded, Task
+from app.llm.router import (
+    STREAM_CLOSED_EARLY,
+    CallContext,
+    LLMRouter,
+    LLMUnavailable,
+    SpendCapExceeded,
+    Task,
+)
 from app.models import LLMCall, User
-from tests.llm_stubs import ScriptedProvider, bad_request, ok, rate_limited, timeout
+from app.services.guardrails import GuardrailPipeline, StreamOutcome, Verdict
+from tests.llm_stubs import (
+    ESTIMATED_COST,
+    ScriptedProvider,
+    bad_request,
+    not_found,
+    ok,
+    rate_limited,
+    timeout,
+)
 
 MSG = [{"role": "user", "content": "hi"}]
 
@@ -95,6 +111,26 @@ async def test_non_retryable_error_fails_fast(make_router) -> None:  # type: ign
     assert len(provider.calls) == 1
 
 
+async def test_retired_model_falls_back_without_retry(make_router) -> None:  # type: ignore[no-untyped-def]
+    provider = ScriptedProvider([not_found(), ok("from fallback")])
+    router = make_router(provider)
+    result = await router.complete(CallContext(Task.chat_simple), MSG)
+    assert result.text == "from fallback"
+    assert [c.model for c in provider.calls] == ["anthropic/primary", "openai/fallback"]
+
+
+def test_judge_sharing_fallback_model_falls_back_to_compile(
+    router_settings: Settings, app: FastAPI, db: AsyncSession
+) -> None:
+    router_settings.model_judge = "groq/qwen/qwen3.8-27b"
+    router_settings.model_fallback = "groq/qwen/qwen3.8-27b"
+    router_settings.model_compile = "gemini/gemini-3.5-flash"
+    router = LLMRouter(router_settings, app.state.test_session_factory, provider=ScriptedProvider())
+    assert router._candidates(Task.judge) == ["groq/qwen/qwen3.8-27b", "gemini/gemini-3.5-flash"]
+    # Other tasks keep the plain fallback.
+    assert router._candidates(Task.chat_simple) == ["anthropic/primary", "groq/qwen/qwen3.8-27b"]
+
+
 async def test_all_models_failing_raises(make_router) -> None:  # type: ignore[no-untyped-def]
     provider = ScriptedProvider([rate_limited()] * 4)
     router = make_router(provider)
@@ -152,11 +188,62 @@ async def test_stream_yields_deltas_and_logs(make_router, db: AsyncSession) -> N
 
 
 async def test_stream_falls_back_before_first_token(make_router) -> None:  # type: ignore[no-untyped-def]
-    provider = ScriptedProvider([rate_limited(), ok("fallback stream")])
+    provider = ScriptedProvider([rate_limited(), rate_limited(), ok("fallback stream")])
     router = make_router(provider)
     chunks = [c async for c in router.stream(CallContext(Task.chat_simple), MSG)]
     assert "".join(chunks) == "fallback stream"
-    assert provider.calls[-1].model == "openai/fallback"
+    assert [c.model for c in provider.calls] == [
+        "anthropic/primary",
+        "anthropic/primary",
+        "openai/fallback",
+    ]
+
+
+async def test_stream_retries_primary_once(make_router) -> None:  # type: ignore[no-untyped-def]
+    provider = ScriptedProvider([timeout(), ok("second try")])
+    router = make_router(provider)
+    chunks = [c async for c in router.stream(CallContext(Task.chat_simple), MSG)]
+    assert "".join(chunks) == "second try"
+    assert [c.model for c in provider.calls] == ["anthropic/primary", "anthropic/primary"]
+
+
+async def test_stream_closed_early_logs_estimated_usage(  # type: ignore[no-untyped-def]
+    make_router, db: AsyncSession, user: User
+) -> None:
+    provider = ScriptedProvider([ok("สวัสดีครับ " * 20)])
+    router = make_router(provider)
+    ctx = CallContext(Task.chat_simple, billed_user_id=user.id)
+    stream = router.stream(ctx, MSG)
+    assert await anext(stream)
+    await stream.aclose()  # consumer stops before StreamEnd (guardrail block / disconnect)
+    logged = await calls(db)
+    assert len(logged) == 1
+    assert logged[0].error == STREAM_CLOSED_EARLY
+    assert logged[0].cost_usd == Decimal(str(ESTIMATED_COST))
+    assert logged[0].billed_user_id == user.id
+
+
+class BlockAll:
+    name = "block_all"
+
+    async def check_input(self, text: str) -> Verdict:
+        return Verdict.pass_()
+
+    async def check_output(self, window: str, *, final: bool) -> Verdict:
+        return Verdict.block("moderation")
+
+
+async def test_guardrail_block_still_logs_the_call(make_router, db: AsyncSession) -> None:  # type: ignore[no-untyped-def]
+    provider = ScriptedProvider([ok("x" * 600)])
+    router = make_router(provider)
+    outcome = StreamOutcome(text="")
+    pipeline = GuardrailPipeline([BlockAll()])
+    deltas = router.stream(CallContext(Task.chat_simple), MSG)
+    out = [d async for d in pipeline.guard_stream(deltas, outcome)]
+    assert out == [] and outcome.blocked_reason == "moderation"
+    logged = await calls(db)
+    assert len(logged) == 1 and logged[0].error == STREAM_CLOSED_EARLY
+    assert logged[0].cost_usd > 0
 
 
 def test_api_key_by_model_prefix(app: FastAPI, db: AsyncSession) -> None:
@@ -165,7 +252,7 @@ def test_api_key_by_model_prefix(app: FastAPI, db: AsyncSession) -> None:
     )
     router = LLMRouter(settings, app.state.test_session_factory, provider=ScriptedProvider())
     assert router._api_key("gemini/gemini-2.5-flash") == "g-key"
-    assert router._api_key("groq/llama-3.3-70b-versatile") == "q-key"
+    assert router._api_key("groq/qwen/qwen3.8-27b") == "q-key"
     assert router._api_key("anthropic/claude-sonnet-5") == "a-key"
     assert router._api_key("openai/gpt-x") is None  # not configured → LiteLLM env fallback
     assert router._api_key("unknown/model") is None

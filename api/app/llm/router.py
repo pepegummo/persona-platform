@@ -5,6 +5,7 @@ model, per-creator daily spend cap, and an `llm_calls` row for every attempt.
 """
 
 import asyncio
+import contextlib
 import json
 import logging
 import time
@@ -33,6 +34,8 @@ from app.models import LLMCall, User
 from app.services.errors import ServiceError
 
 log = logging.getLogger(__name__)
+
+STREAM_CLOSED_EARLY = "stream closed early; usage estimated"
 
 
 class Task(StrEnum):
@@ -99,6 +102,7 @@ class LLMRouter:
         self.provider = provider or build_provider(settings)
         # Bookkeeping queries are tiny; serializing them keeps a single shared connection safe.
         self._db_lock = asyncio.Lock()
+        self._background: set[asyncio.Task[None]] = set()
 
     # --- routing ------------------------------------------------------------------------------
 
@@ -118,8 +122,14 @@ class LLMRouter:
 
     def _candidates(self, task: Task) -> list[str]:
         primary = self.model_for(task)
+        if task == Task.embed:
+            return [primary]
         fallback = self.settings.model_fallback
-        if task == Task.embed or not fallback or fallback == primary:
+        if task == Task.judge and fallback == primary:
+            # Judge shares the fallback model (free-tier profile): use the compile model instead
+            # so a 429 on that one provider does not leave the judge without a fallback.
+            fallback = self.settings.model_compile
+        if not fallback or fallback == primary:
             return [primary]
         return [primary, fallback]
 
@@ -186,6 +196,17 @@ class LLMRouter:
         except Exception:
             log.exception("llm: failed to log call")
 
+    async def _log_shielded(
+        self, ctx: CallContext, model: str, usage: Usage, latency_ms: int, error: str
+    ) -> None:
+        """Log from a stream that is being closed or cancelled: the write runs as its own task so
+        a cancelled request (client disconnect) still records the call."""
+        task = asyncio.create_task(self._log(ctx, model, usage, latency_ms, error=error))
+        self._background.add(task)
+        task.add_done_callback(self._background.discard)
+        with contextlib.suppress(asyncio.CancelledError):
+            await asyncio.shield(task)
+
     # --- calls --------------------------------------------------------------------------------
 
     async def complete(
@@ -215,9 +236,9 @@ class LLMRouter:
                     await self._log(ctx, model, Usage(), latency, error=str(e))
                     last_error = e
                     log.warning("llm %s %s attempt %d failed: %s", ctx.task, model, attempt, e)
-                    if not e.retryable:
+                    if not e.fallback:
                         raise LLMUnavailable() from e
-                    if attempt == 1:
+                    if e.retryable and attempt == 1:
                         await asyncio.sleep(0.5)
                         continue
                     break  # move to fallback model
@@ -258,34 +279,64 @@ class LLMRouter:
         *,
         max_tokens: int = 1024,
     ) -> AsyncIterator[str]:
-        """Yield text deltas. Fallback applies only if the primary fails before any output."""
+        """Yield text deltas. Retry and fallback work as in `complete`, but only before the first
+        delta.
+
+        If the stream stops before the provider reports usage (a guardrail block, a client
+        disconnect, or an error mid-answer), the call is logged with an estimate from the prompt
+        and the text produced so far, so it still counts toward the spend cap.
+        """
         await self._check_spend_cap(ctx.billed_user_id)
         last_error: ProviderError | None = None
         for model in self._candidates(ctx.task):
-            started = time.perf_counter()
-            produced = False
-            try:
-                async for item in self.provider.stream(
-                    model=model,
-                    messages=messages,
-                    timeout_s=self.settings.llm_timeout_s,
-                    max_tokens=max_tokens,
-                    api_key=self._api_key(model),
-                ):
-                    if isinstance(item, StreamEnd):
-                        latency = int((time.perf_counter() - started) * 1000)
-                        await self._log(ctx, model, item.usage, latency)
-                        return
-                    produced = True
-                    yield item
-                return
-            except ProviderError as e:
-                latency = int((time.perf_counter() - started) * 1000)
-                await self._log(ctx, model, Usage(), latency, error=str(e))
-                last_error = e
-                if produced or not e.retryable:
-                    raise LLMUnavailable() from e
+            for attempt in (1, 2):
+                started = time.perf_counter()
+                parts: list[str] = []
+                try:
+                    async with contextlib.aclosing(
+                        self.provider.stream(
+                            model=model,
+                            messages=messages,
+                            timeout_s=self.settings.llm_timeout_s,
+                            max_tokens=max_tokens,
+                            api_key=self._api_key(model),
+                        )
+                    ) as items:
+                        async for item in items:
+                            if isinstance(item, StreamEnd):
+                                latency = int((time.perf_counter() - started) * 1000)
+                                await self._log(ctx, model, item.usage, latency)
+                                return
+                            parts.append(item)
+                            yield item
+                    return
+                except ProviderError as e:
+                    latency = int((time.perf_counter() - started) * 1000)
+                    usage = self._estimate(model, messages, parts) if parts else Usage()
+                    await self._log(ctx, model, usage, latency, error=str(e))
+                    last_error = e
+                    log.warning(
+                        "llm %s %s stream attempt %d failed: %s", ctx.task, model, attempt, e
+                    )
+                    if parts or not e.fallback:
+                        raise LLMUnavailable() from e
+                    if e.retryable and attempt == 1:
+                        await asyncio.sleep(0.5)
+                        continue
+                    break  # move to fallback model
+                except (GeneratorExit, asyncio.CancelledError):
+                    latency = int((time.perf_counter() - started) * 1000)
+                    usage = self._estimate(model, messages, parts)
+                    await self._log_shielded(ctx, model, usage, latency, STREAM_CLOSED_EARLY)
+                    raise
         raise LLMUnavailable() from last_error
+
+    def _estimate(self, model: str, messages: list[Message], parts: list[str]) -> Usage:
+        try:
+            return self.provider.estimate_usage(model=model, messages=messages, text="".join(parts))
+        except Exception:
+            log.exception("llm: usage estimate failed for %s", model)
+            return Usage()
 
     async def embed(self, ctx: CallContext, texts: list[str]) -> list[list[float]]:
         if not texts:

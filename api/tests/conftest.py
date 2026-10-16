@@ -13,6 +13,10 @@ import sys
 from collections.abc import AsyncIterator, Callable, Iterator
 from urllib.parse import urlsplit, urlunsplit
 
+# LiteLLM's import runs load_dotenv() in its default "DEV" mode, which would leak the developer's
+# .env (e.g. EMBEDDING_MODEL=fake/hash) into every Settings() built after any test imports it.
+os.environ.setdefault("LITELLM_MODE", "PRODUCTION")
+
 import asyncpg
 import pytest
 from fastapi import FastAPI

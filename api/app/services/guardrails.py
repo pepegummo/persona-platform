@@ -77,30 +77,36 @@ class GuardrailPipeline:
         """Re-yield deltas that passed; on a failed check stop early and record the reason.
 
         `outcome` is filled in as the stream progresses so the caller can persist the result
-        after the generator finishes.
+        after the generator finishes. `deltas` is closed on every exit, so an early stop lets the
+        router log the call (with estimated usage) right away instead of at garbage collection.
         """
-        pending = ""
-        since_check = 0
-        async for delta in deltas:
-            pending += delta
-            since_check += len(delta)
-            if self.guardrails and since_check >= CHUNK_CHARS:
-                window = (outcome.text + pending)[-WINDOW_CHARS:]
-                verdict = await self._check_output(window, final=False)
+        try:
+            pending = ""
+            since_check = 0
+            async for delta in deltas:
+                pending += delta
+                since_check += len(delta)
+                if self.guardrails and since_check >= CHUNK_CHARS:
+                    window = (outcome.text + pending)[-WINDOW_CHARS:]
+                    verdict = await self._check_output(window, final=False)
+                    if not verdict.ok:
+                        outcome.blocked_reason = verdict.reason
+                        return
+                    since_check = 0
+                # Release text that has passed the last chunk check.
+                if not self.guardrails or since_check == 0:
+                    outcome.text += pending
+                    yield pending
+                    pending = ""
+            if self.guardrails:
+                verdict = await self._check_output(outcome.text + pending, final=True)
                 if not verdict.ok:
                     outcome.blocked_reason = verdict.reason
                     return
-                since_check = 0
-            # Release text that has passed the last chunk check.
-            if not self.guardrails or since_check == 0:
+            if pending:
                 outcome.text += pending
                 yield pending
-                pending = ""
-        if self.guardrails:
-            verdict = await self._check_output(outcome.text + pending, final=True)
-            if not verdict.ok:
-                outcome.blocked_reason = verdict.reason
-                return
-        if pending:
-            outcome.text += pending
-            yield pending
+        finally:
+            aclose = getattr(deltas, "aclose", None)
+            if aclose is not None:
+                await aclose()
