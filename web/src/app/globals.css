@@ -10,6 +10,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+  --font-display: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -163,6 +164,126 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Persona rooms: the public page of each persona takes one of six colours, picked from its slug
+   (lib/room.ts) in the same order as the avatar palette. wall = page ground, ink/soft = text on
+   it, paper = their bubbles and the input, tone/tone-fg = the visitor's bubbles, line = borders.
+   Every text pair meets WCAG AA. Components fall back to the site theme when no room is set. */
+[data-room="marigold"] {
+  --room-wall: #fbf0d2;
+  --room-ink: #3b2a08;
+  --room-soft: #6b5420;
+  --room-paper: #fffdf8;
+  --room-tone: #7a5410;
+  --room-tone-fg: #ffffff;
+  --room-line: #ead7a2;
+  --room-mark: #e9b44c;
+}
+[data-room="sky"] {
+  --room-wall: #e4edf8;
+  --room-ink: #13314f;
+  --room-soft: #3f5a78;
+  --room-paper: #fbfdff;
+  --room-tone: #2c5a8a;
+  --room-tone-fg: #ffffff;
+  --room-line: #c5d6ea;
+  --room-mark: #8fb3d9;
+}
+[data-room="rose"] {
+  --room-wall: #f8e4eb;
+  --room-ink: #4a1a2c;
+  --room-soft: #7a4559;
+  --room-paper: #fffbfc;
+  --room-tone: #8c3a5a;
+  --room-tone-fg: #ffffff;
+  --room-line: #ebc6d3;
+  --room-mark: #d9a0b5;
+}
+[data-room="sage"] {
+  --room-wall: #e4f0e6;
+  --room-ink: #173b20;
+  --room-soft: #45614b;
+  --room-paper: #fbfefb;
+  --room-tone: #2f6b3b;
+  --room-tone-fg: #ffffff;
+  --room-line: #c5dec9;
+  --room-mark: #9cc5a1;
+}
+[data-room="coral"] {
+  --room-wall: #fbe6de;
+  --room-ink: #4a1c0c;
+  --room-soft: #7a4634;
+  --room-paper: #fffcfa;
+  --room-tone: #9a4229;
+  --room-tone-fg: #ffffff;
+  --room-line: #efc8b9;
+  --room-mark: #e89a7a;
+}
+[data-room="lilac"] {
+  --room-wall: #ece6f8;
+  --room-ink: #2a1a52;
+  --room-soft: #57487e;
+  --room-paper: #fdfcff;
+  --room-tone: #5a43a0;
+  --room-tone-fg: #ffffff;
+  --room-line: #d5caee;
+  --room-mark: #b9a6e0;
+}
+
+.dark [data-room="marigold"] {
+  --room-wall: #241b0a;
+  --room-ink: #f6e6c0;
+  --room-soft: #cdb98c;
+  --room-paper: #33280f;
+  --room-tone: #e9b44c;
+  --room-tone-fg: #2a1e05;
+  --room-line: #4a3a18;
+}
+.dark [data-room="sky"] {
+  --room-wall: #101b28;
+  --room-ink: #dbe8f6;
+  --room-soft: #a5bcd6;
+  --room-paper: #1a2838;
+  --room-tone: #8fb3d9;
+  --room-tone-fg: #0f243b;
+  --room-line: #2c405a;
+}
+.dark [data-room="rose"] {
+  --room-wall: #24121a;
+  --room-ink: #f6dde6;
+  --room-soft: #d3a9b9;
+  --room-paper: #331d26;
+  --room-tone: #d9a0b5;
+  --room-tone-fg: #3a1222;
+  --room-line: #4f2f3c;
+}
+.dark [data-room="sage"] {
+  --room-wall: #111f16;
+  --room-ink: #dcefdf;
+  --room-soft: #a8c8ad;
+  --room-paper: #1b2d21;
+  --room-tone: #9cc5a1;
+  --room-tone-fg: #122e18;
+  --room-line: #2f4a36;
+}
+.dark [data-room="coral"] {
+  --room-wall: #27140d;
+  --room-ink: #f8e0d6;
+  --room-soft: #d8ab98;
+  --room-paper: #361e15;
+  --room-tone: #e89a7a;
+  --room-tone-fg: #3a160a;
+  --room-line: #523326;
+}
+.dark [data-room="lilac"] {
+  --room-wall: #1a1428;
+  --room-ink: #e7e0f8;
+  --room-soft: #b8acd8;
+  --room-paper: #262038;
+  --room-tone: #b9a6e0;
+  --room-tone-fg: #22164a;
+  --room-line: #3d3358;
 }
 
 /* Chat "typing" dots: they bounce only when the viewer allows motion. */

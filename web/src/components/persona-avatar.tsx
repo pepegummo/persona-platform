@@ -1,6 +1,8 @@
+import { seedIndex } from "@/lib/room";
 import { cn } from "@/lib/utils";
 
 // Warm pastel fills with dark text; each pair passes AA and reads on light and dark grounds.
+// Same order as ROOMS in lib/room.ts, so a persona's avatar matches its public page.
 const PALETTE: ReadonlyArray<readonly [string, string]> = [
   ["#e9b44c", "#3b2a08"],
   ["#8fb3d9", "#13314f"],
@@ -23,9 +25,7 @@ export function initialOf(name: string): string {
 }
 
 function colorFor(seed: string): readonly [string, string] {
-  let h = 0;
-  for (const ch of seed) h = (h * 31 + ch.codePointAt(0)!) >>> 0;
-  return PALETTE[h % PALETTE.length];
+  return PALETTE[seedIndex(seed, PALETTE.length)];
 }
 
 const SIZES = {

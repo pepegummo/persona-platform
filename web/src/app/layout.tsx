@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anuphan, Geist_Mono } from "next/font/google";
+import { Anuphan, Geist_Mono, Mitr } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 
@@ -16,6 +16,12 @@ const fontSans = Anuphan({
   variable: "--font-sans",
   subsets: ["thai", "latin"],
   weight: ["400", "500", "600", "700"],
+});
+// Display face for the persona's name on its public page only. Rounded, with Thai glyphs.
+const fontDisplay = Mitr({
+  variable: "--font-display",
+  subsets: ["thai", "latin"],
+  weight: ["500"],
 });
 const fontMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
@@ -41,7 +47,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${fontSans.variable} ${fontMono.variable}`}
+      className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable}`}
     >
       <body className="flex min-h-dvh flex-col antialiased">
         <ThemeProvider>

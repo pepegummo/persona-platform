@@ -307,12 +307,14 @@
   "public": {
     "label": "AI version of {name}",
     "disclaimer": "This is an AI imitating an answering style, not the real person. It can be wrong and does not know their personal life.",
-    "ownerCanRead": "The persona owner can read this conversation",
-    "ownerCannotRead": "The persona owner only sees aggregate stats, not your messages",
+    "ownerCanRead": "The persona owner can read this conversation.",
+    "ownerCannotRead": "The persona owner only sees overall stats, not your messages.",
     "createOwn": "Create your own",
     "ctaTitle": "Want an AI that answers like you?",
     "ctaLink": "Create your own persona",
-    "notReal": "An AI imitating an answering style, not the real person. It can be wrong."
+    "notReal": "An AI imitating an answering style, not the real person. It can be wrong.",
+    "sampleTitle": "How {name} answers",
+    "askTitle": "Try asking {name}"
   },
   "report": {
     "button": "Report",
